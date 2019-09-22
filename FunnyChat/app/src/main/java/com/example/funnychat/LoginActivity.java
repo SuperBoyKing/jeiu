@@ -21,6 +21,7 @@ import butterknife.ButterKnife;
 public class LoginActivity extends Activity {
 
     private static final String TAG = "LoginActivity";
+    private static final String USER_INFO= "user_Info";
     private static final int REQUEST_SINGUP = 0;
 
     @BindView(R.id.login_email) EditText loginEmail;
@@ -56,38 +57,41 @@ public class LoginActivity extends Activity {
 
         SQLiteDatabase db = new FunnyDBHelper(this).getReadableDatabase();
         String selectQuery = "SELECT * FROM chatUser WHERE email =? AND password =?";
-
         String email = loginEmail.getText().toString();
         String password = loginPassword.getText().toString();
 
-        if (!validate(email, password))
-            return false;
-
+        if (!validate(email, password))  return false;
         BtnLogin.setEnabled(false);
-
         final ProgressDialog progressDialog = new ProgressDialog(LoginActivity.this,
-                R.style.Theme_AppCompat_DayNight_Dialog);
+                                              R.style.Theme_AppCompat_DayNight_Dialog);
         progressDialog.setIndeterminate(true);
         progressDialog.setMessage("Authenticating...");
         progressDialog.show();
 
-        Cursor cursor =  db.rawQuery(selectQuery, new String[]{email, password} );
+        Cursor cursor = db.rawQuery(selectQuery, new String[]{email, password} );
 
         if (cursor != null) {
             if (cursor.getCount() > 0)
             {
+                String userName = null;
+                if  (cursor.moveToFirst())
+                {
+                    do {
+                      userName = cursor.getString(cursor.getColumnIndex("nickName"));
+                    }while (cursor.moveToNext());
+                }
 
+                String userInfo[] = {email, userName};
                 new android.os.Handler().postDelayed(
                         new Runnable() {
                             public void run() {
-                                onLoginSuccess();
+                                onLoginSuccess(userInfo);
                                 progressDialog.dismiss();
                             }
-                        },500);
+                        }, 500);
                 return true;
             }
         } else {
-
             onLoginFailed(progressDialog);
             return false;
         }
@@ -129,9 +133,10 @@ public class LoginActivity extends Activity {
     }
 
 
-    public void onLoginSuccess() {
+    public void onLoginSuccess(String[] userInfo) {
         BtnLogin.setEnabled(true);
         Intent mainIntent = new Intent(getApplicationContext(), MainActivity.class);
+        mainIntent.putExtra(USER_INFO, userInfo);
         startActivity(mainIntent);
         finish();
     }
@@ -139,7 +144,7 @@ public class LoginActivity extends Activity {
 
     public void onLoginFailed(ProgressDialog progressDialog) {
         progressDialog.dismiss();
-        Toast.makeText(getBaseContext(), "로그인 실패", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getBaseContext(), "가입되지 않은 계정입니다.", Toast.LENGTH_SHORT).show();
         BtnLogin.setEnabled(true);
     }
 }

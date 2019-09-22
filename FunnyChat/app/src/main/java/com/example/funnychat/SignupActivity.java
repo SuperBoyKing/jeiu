@@ -1,5 +1,6 @@
 package com.example.funnychat;
 
+import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -62,13 +63,14 @@ public class SignupActivity extends AppCompatActivity {
 
         SQLiteDatabase db = new FunnyDBHelper(this).getWritableDatabase();
 
-        if (!validate(email, password, nickName, db)) {
-            onSignupFailed();
-            return;
-        }
+        if (!validate(email, password, nickName, db)) return;
 
+        final ProgressDialog progressDialog = new ProgressDialog(SignupActivity.this,
+                                              R.style.Theme_AppCompat_DayNight_Dialog);
+        progressDialog.setIndeterminate(true);
+        progressDialog.setMessage("Creating Account...");
+        progressDialog.show();
         btnSignup.setEnabled(false);
-
         ContentValues values = new ContentValues();
         values.put(FunnyDBContract.ChatUser.COLUMN_EMAIL, email);
         values.put(FunnyDBContract.ChatUser.COLUMN_PASSWORD, password);
@@ -83,6 +85,7 @@ public class SignupActivity extends AppCompatActivity {
         catch (Exception e) {
             Log.e(TAG, "Error", e);
             Toast.makeText(this, "Date is in the wrong format", Toast.LENGTH_LONG).show();
+            progressDialog.dismiss();
             return;
         }
         long newColumn = db.insert(FunnyDBContract.ChatUser.TABLE_NAME, null, values);
@@ -92,8 +95,9 @@ public class SignupActivity extends AppCompatActivity {
                 new Runnable() {
                     public void run() {
                         onSignupSuccess();
+                        progressDialog.dismiss();
                     }
-                }, 3000);
+                }, 1000);
 
     }
 
@@ -102,7 +106,7 @@ public class SignupActivity extends AppCompatActivity {
         boolean valid = true;
 
         String conPassword = confirmPassword.getText().toString();
-        Cursor cs = db.rawQuery("SELECT *FROM chatUser WHERE email =?", new String[] {email});
+        Cursor cs = db.rawQuery("SELECT * FROM chatUser WHERE email =?", new String[] {email});
 
         if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             signupEmail.setError("유효하지 않은 이메일 형식입니다.");
@@ -144,8 +148,6 @@ public class SignupActivity extends AppCompatActivity {
             signupNickname.setError(null);
         }
 
-
-
         return valid;
     }
 
@@ -159,7 +161,6 @@ public class SignupActivity extends AppCompatActivity {
 
     public void onSignupFailed() {
         Toast.makeText(this, "회원가입 실패",Toast.LENGTH_SHORT).show();
-
         btnSignup.setEnabled(true);
     }
 }

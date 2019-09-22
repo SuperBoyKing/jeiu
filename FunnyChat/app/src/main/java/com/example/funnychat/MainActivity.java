@@ -1,5 +1,6 @@
 package com.example.funnychat;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -20,10 +21,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
+import android.widget.TextView;
+
+import butterknife.BindView;
 
 public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
+    private static final String USER_INFO = "user_Info";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,8 +45,10 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
+        SycUserProfile(navigationView);
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
@@ -65,5 +73,14 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
+    }
+
+    public void SycUserProfile(NavigationView navigationView) {
+        View headerView = navigationView.getHeaderView(0);
+        String userInfo[] = getIntent().getStringArrayExtra(USER_INFO);
+        TextView headerTitle = headerView.findViewById(R.id.textView_head);
+        TextView headerSubTitle = headerView.findViewById(R.id.textView_sub);
+        headerTitle.setText(userInfo[0]);
+        headerSubTitle.setText(userInfo[1]);
     }
 }
