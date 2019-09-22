@@ -1,6 +1,7 @@
 package com.example.funnychat;
 
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
@@ -54,24 +55,24 @@ public class SignupActivity extends AppCompatActivity {
 
     public void signup() {
         String email = signupEmail.getText().toString();
-        String password = signupEmail.getText().toString();
-        String nickname = signupNickname.getText().toString();
+        String password = signupPassword.getText().toString();
+        String nickName = signupNickname.getText().toString();
 
         Log.d(TAG, "Signup");
 
-        if (!validate()) {
+        SQLiteDatabase db = new FunnyDBHelper(this).getWritableDatabase();
+
+        if (!validate(email, password, nickName, db)) {
             onSignupFailed();
             return;
         }
 
         btnSignup.setEnabled(false);
 
-        SQLiteDatabase db = new FunnyDBHelper(this).getWritableDatabase();
-
         ContentValues values = new ContentValues();
         values.put(FunnyDBContract.ChatUser.COLUMN_EMAIL, email);
         values.put(FunnyDBContract.ChatUser.COLUMN_PASSWORD, password);
-        values.put(FunnyDBContract.ChatUser.COLUMN_NICKNAME, nickname);
+        values.put(FunnyDBContract.ChatUser.COLUMN_NICKNAME, nickName);
 
         try {
             Calendar calendar = Calendar.getInstance();
@@ -97,17 +98,21 @@ public class SignupActivity extends AppCompatActivity {
     }
 
 
-    public boolean validate() {
+    public boolean validate(String email, String password, String nickName, SQLiteDatabase db) {
         boolean valid = true;
 
-        String email = signupEmail.getText().toString();
-        String password = signupPassword.getText().toString();
         String conPassword = confirmPassword.getText().toString();
-        String nickname = signupNickname.getText().toString();
+        Cursor cs = db.rawQuery("SELECT *FROM chatUser WHERE email =?", new String[] {email});
 
         if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             signupEmail.setError("유효하지 않은 이메일 형식입니다.");
             valid = false;
+        } else if (cs != null) {
+            if (cs.getCount() > 0)
+            {
+                signupEmail.setError("중복된 이메일 입니다.");
+                valid = false;
+            }
         } else {
             signupEmail.setError(null);
         }
@@ -125,12 +130,21 @@ public class SignupActivity extends AppCompatActivity {
             signupPassword.setError(null);
         }
 
-        if (nickname.isEmpty() || nickname.length() < 4) {
+        cs = db.rawQuery("SELECT * FROM chatUser WHERE nickName=?", new String[] {nickName});
+        if (nickName.isEmpty() || nickName.length() < 4) {
             signupNickname.setError("별칭은 최소 4자 이상이어야 합니다.");
             valid = false;
+        } else if (cs != null) {
+            if (cs.getCount() > 0)
+            {
+                signupNickname.setError("중복되는 별칭입니다.");
+                valid = false;
+            }
         } else {
             signupNickname.setError(null);
         }
+
+
 
         return valid;
     }

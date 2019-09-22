@@ -1,7 +1,5 @@
 package com.example.funnychat;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -14,11 +12,8 @@ import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.util.Calendar;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -28,8 +23,8 @@ public class LoginActivity extends Activity {
     private static final String TAG = "LoginActivity";
     private static final int REQUEST_SINGUP = 0;
 
-    @BindView(R.id.txt_email) EditText TxtEmail;
-    @BindView(R.id.txt_password) EditText TxtPassword;
+    @BindView(R.id.login_email) EditText loginEmail;
+    @BindView(R.id.login_password) EditText loginPassword;
     @BindView(R.id.btn_login) Button BtnLogin;
     @BindView(R.id.txt_Register) TextView SignupLink;
 
@@ -59,13 +54,14 @@ public class LoginActivity extends Activity {
     public boolean login() throws SQLException {
         Log.d(TAG, "Login");
 
-        String email = TxtEmail.getText().toString();
-        String password = TxtPassword.getText().toString();
+        SQLiteDatabase db = new FunnyDBHelper(this).getReadableDatabase();
+        String selectQuery = "SELECT * FROM chatUser WHERE email =? AND password =?";
 
-        if (!validate(email, password)) {
-            onLoginFailed();
+        String email = loginEmail.getText().toString();
+        String password = loginPassword.getText().toString();
+
+        if (!validate(email, password))
             return false;
-        }
 
         BtnLogin.setEnabled(false);
 
@@ -75,31 +71,28 @@ public class LoginActivity extends Activity {
         progressDialog.setMessage("Authenticating...");
         progressDialog.show();
 
-        SQLiteDatabase db = new FunnyDBHelper(this).getReadableDatabase();
-        final String tableName = FunnyDBContract.ChatUser.TABLE_NAME;
-        final String columnEmail = FunnyDBContract.ChatUser.COLUMN_EMAIL;
-        final String columnPassword = FunnyDBContract.ChatUser.COLUMN_PASSWORD;
-
-
-        Cursor cursor =  db.rawQuery("SELECT * FROM " + tableName +
-                        " WHERE columnEmail =? AND columnPassword =?",
-                new String[]{email,password} );
+        Cursor cursor =  db.rawQuery(selectQuery, new String[]{email, password} );
 
         if (cursor != null) {
             if (cursor.getCount() > 0)
             {
+
                 new android.os.Handler().postDelayed(
                         new Runnable() {
                             public void run() {
                                 onLoginSuccess();
                                 progressDialog.dismiss();
                             }
-                        },3000);
-
+                        },500);
                 return true;
             }
+        } else {
+
+            onLoginFailed(progressDialog);
+            return false;
         }
-        //progressDialog.dismiss();
+
+        onLoginFailed(progressDialog);
         return false;
     }
 
@@ -107,9 +100,7 @@ public class LoginActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_SINGUP) {
-            if (resultCode == RESULT_OK) {
-
-            }
+            if (resultCode == RESULT_OK) {}
         }
     }
 
@@ -118,20 +109,20 @@ public class LoginActivity extends Activity {
         boolean valid = true;
 
         if (email.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            TxtEmail.setError("이메일 형식이 올바르지 않습니다.");
+            loginEmail.setError("이메일 형식이 올바르지 않습니다.");
             valid = false;
         } else {
-            TxtEmail.setError(null);
+            loginEmail.setError(null);
         }
 
-        if (password.isEmpty() ) {
-            TxtPassword.setError("비밀번호를 입력해 주세요.");
+        if (password.isEmpty()) {
+            loginPassword.setError("비밀번호를 입력해 주세요.");
             valid = false;
         } else if(password.length() < 5) {
-            TxtPassword.setError("비밀번호는 최소 5자 이상입니다.");
+            loginPassword.setError("비밀번호는 최소 5자 이상입니다.");
             valid = false;
         } else {
-            TxtPassword.setError(null);
+            loginPassword.setError(null);
         }
 
         return valid;
@@ -141,11 +132,13 @@ public class LoginActivity extends Activity {
     public void onLoginSuccess() {
         BtnLogin.setEnabled(true);
         Intent mainIntent = new Intent(getApplicationContext(), MainActivity.class);
+        startActivity(mainIntent);
         finish();
     }
 
 
-    public void onLoginFailed() {
+    public void onLoginFailed(ProgressDialog progressDialog) {
+        progressDialog.dismiss();
         Toast.makeText(getBaseContext(), "로그인 실패", Toast.LENGTH_SHORT).show();
         BtnLogin.setEnabled(true);
     }
