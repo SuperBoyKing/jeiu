@@ -1,45 +1,221 @@
 package Background;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
-import java.util.HashSet;
-import java.util.Set;
+import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class ChatServer {
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.BorderPane;
+import javafx.stage.Stage;
 
-	private ExecutorService executorService;
-	private ServerSocketChannel serverSocketChannel;
-	private Set<UserThread> userThreads = new HashSet<>();
-	private Set<UserThread> userNames = new HashSet<>();
+public class ChatServer extends Application {
 	
-	public void startServer() {
-		ExecutorService executorService = Executors.newFixedThreadPool(
+	ExecutorService executorService;
+	ServerSocketChannel serverSocketChannel;
+	List<Client> connections = new Vector<Client>();
+	
+	void startServer() {
+		executorService = Executors.newFixedThreadPool(
 				Runtime.getRuntime().availableProcessors()
-			);
+		);
 		
 		try {
 			serverSocketChannel = ServerSocketChannel.open();
 			serverSocketChannel.configureBlocking(true);
 			serverSocketChannel.bind(new InetSocketAddress(1000));
 		} catch (Exception e) {
-			if (serverSocketChannel.isOpen()) 
-			{
-				System.out.println("already using this port on another program");
+			if (serverSocketChannel.isOpen()) {
+				System.out.println("already using port number on another prosess");
 				stopServer();
 			}
 			return;
 		}
+		
+		Runnable runnable = new Runnable() {
+			
+			@Override
+			public void run() {
+				Platform.runLater(()->{
+					displayText("[서버시작]");
+					btnStartStop.setText("stop");
+				});
+				
+				while (true) {
+					try {
+						SocketChannel socketChannel = serverSocketChannel.accept();
+						String message = "[연결 수락: " + socketChannel.getRemoteAddress() +
+										 ": " + Thread.currentThread().getName() + "]";
+						Platform.runLater(()->displayText(message));
+						
+						Client client = new Client(socketChannel);
+						connections.add(client);
+						
+						Platform.runLater(()->displayText("[연결 개수: " + connections.size() + "]")); 
+					} catch (Exception e) {
+						if (serverSocketChannel.isOpen()) {
+							stopServer();
+						}
+						break;
+					}
+				}
+			}
+		};
+		executorService.submit(runnable);
 	}
 	
-	public void stopServer() {
+	
+	void stopServer() {
+		try {
+			Iterator<Client> iterator = connections.iterator();
+			while (iterator.hasNext()) {
+				Client client = iterator.next();
+				client.socketChannel.close();
+				iterator.remove();
+			}
+			if (serverSocketChannel != null && serverSocketChannel.isOpen()) {
+				serverSocketChannel.close();
+			}
+			if (executorService != null && !executorService.isShutdown()) {
+				executorService.shutdown();
+			}
+			Platform.runLater(()->{
+				displayText("[서버 종료]");
+				btnStartStop.setText("start");
+			});
+		} catch (Exception e) {
+			System.out.println("서버 종료 오류");
+		}
+	}
+	
+	
+	class Client {
 		
+		SocketChannel socketChannel;
+		
+		Client(SocketChannel socketChannel) {
+			this.socketChannel = socketChannel;
+			receive();
+		}
+		
+		void receive() {
+			Runnable runnable = new Runnable() {
+				
+				@Override
+				public void run() {
+					while (true) {
+						try {
+							ByteBuffer byteBuffer = ByteBuffer.allocate(100);
+							
+							int readByteCount = socketChannel.read(byteBuffer);
+							
+							if (readByteCount == -1) {
+								throw new IOException();
+							}
+							
+							String message = "[요청 처리: " + socketChannel.getRemoteAddress() + ": "
+									+ Thread.currentThread().getName() + "]";
+							Platform.runLater(()->displayText(message));
+							
+							byteBuffer.flip();
+							Charset charset = Charset.forName("UTF-8");
+							String data = charset.decode(byteBuffer).toString();
+							
+							for (Client client : connections)  
+								client.send(data);
+							
+						} catch(Exception e) {
+							try {
+								connections.remove(Client.this);
+								String message = "[클라이언트 통신 끊김: " + socketChannel.getRemoteAddress() + ": "
+												 + Thread.currentThread().getName() + "]";
+								Platform.runLater(()->displayText(message));
+								socketChannel.close();
+							} catch(IOException e2)  { System.out.println("입출력 오류"); }
+							
+							break;
+						}
+					}
+				}
+			};
+			executorService.submit(runnable);
+		}
+		
+		
+		void send(String data) {
+			Runnable runnable = new Runnable() {
+				
+				@Override
+				public void run() {
+					try {
+						Charset charset = Charset.forName("UTF-8");
+						ByteBuffer byteBuffer = charset.encode(data);
+						socketChannel.write(byteBuffer);
+					} catch(Exception e) {
+						try {
+							String message = "[클라이언트 통신 끊김: " + socketChannel.getRemoteAddress() + ": "
+											 + Thread.currentThread().getName() + "]";
+							Platform.runLater(()->displayText(message));
+							connections.remove(Client.this);
+							socketChannel.close();
+						} catch(IOException e2) {}
+					}
+				}
+			};
+			executorService.submit(runnable);
+		}
+	}
+	
+	TextArea txtDisplay;
+	Button btnStartStop;
+	
+	@Override
+	public void start(Stage primaryStage) throws Exception {
+		BorderPane root = new BorderPane();
+		root.setPrefSize(600, 600);
+		
+		txtDisplay = new TextArea();
+		txtDisplay.setEditable(false);
+		BorderPane.setMargin(txtDisplay, new Insets(0, 0, 0, 2));
+		root.setCenter(txtDisplay);
+		
+		btnStartStop = new Button("start");
+		btnStartStop.setPrefHeight(30);
+		btnStartStop.setMaxWidth(Double.MAX_VALUE);
+		btnStartStop.setOnAction(e->{
+			if(btnStartStop.getText().equals("start")) {
+				startServer();
+			} else {
+				stopServer();
+			}
+		});
+		root.setTop(btnStartStop);
+		
+		Scene scene = new Scene(root);
+		//scene.getStylesheets().add(getClass().getResource("server.css").toString());
+		primaryStage.setScene(scene);
+		primaryStage.setTitle("Server");
+		primaryStage.setOnCloseRequest(event->stopServer());
+		primaryStage.show();
+	}
+	
+	void displayText(String text) {
+		txtDisplay.appendText(text + "\n");
 	}
 	
 	public static void main(String[] args) {
-	
-
+		launch(args);
 	}
-
 }
