@@ -1,23 +1,17 @@
 package com.example.client;
 
 import android.app.Activity;
+import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
-import android.widget.Button;
+import android.widget.AbsListView;
 import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.ImageButton;
+import android.widget.ListView;
 
-import com.example.client.R;
-
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
@@ -26,20 +20,24 @@ import java.nio.charset.Charset;
 public class ClientActivity extends Activity {
 
     SocketChannel socketChannel;
-
-    EditText smessage;
-    TextView chat;
-    Button sent;
+    boolean side = false;
+    ChatArrayAdapter chatArrayAdapter;
+    EditText chatText;
+    ListView chatView;
+    ImageButton sent;
     Handler handler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_client);
-        chat = (TextView) findViewById(R.id.chat);
-        smessage = (EditText) findViewById(R.id.smessage);
-        sent = (Button) findViewById(R.id.sent_button);
-        startClient();
+        chatView = (ListView) findViewById(R.id.chatView);
+        chatText = (EditText) findViewById(R.id.chatText);
+        sent = (ImageButton) findViewById(R.id.sent);
+        chatArrayAdapter = new ChatArrayAdapter(getApplicationContext(), R.layout.my_message);
+        chatView.setAdapter(chatArrayAdapter);
+        chatView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+        chatView.setAdapter(chatArrayAdapter);
         sent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v)
@@ -48,6 +46,14 @@ public class ClientActivity extends Activity {
                 sentThread.start();
             }
         });
+        chatArrayAdapter.registerDataSetObserver(new DataSetObserver() {
+            @Override
+            public void onChanged() {
+                super.onChanged();
+                chatView.setSelection(chatArrayAdapter.getCount() -1);
+            }
+        });
+        startClient();
     }
 
     void startClient() {
@@ -57,11 +63,10 @@ public class ClientActivity extends Activity {
                 try {
                     socketChannel = SocketChannel.open();
                     socketChannel.configureBlocking(true);
-                    socketChannel.connect(new InetSocketAddress("172.30.1.21", 1000));
+                    socketChannel.connect(new InetSocketAddress("121.172.113.28", 1000));
 
                 } catch (Exception e) {
                     try {
-                        chat.setText("연결 실패");
                         stopClient();
                         return;
                     } catch(Exception e2) {}
@@ -74,9 +79,9 @@ public class ClientActivity extends Activity {
 
     void stopClient() {
         try {
-            smessage.setFocusable(false);
+            chatText.setFocusable(false);
             sent.setFocusable(false);
-            chat.setFocusable(false);
+            chatView.setFocusable(false);
 
             if (socketChannel != null && socketChannel.isOpen()) {
                 socketChannel.close();
@@ -110,10 +115,16 @@ public class ClientActivity extends Activity {
         public void run() {
             try {
                 Charset charset = Charset.forName("UTF-8");
-                String message = smessage.getText().toString();
-                ByteBuffer byteBuffer = charset.encode(message);
+                final String smessage = chatText.getText().toString();
+                ByteBuffer byteBuffer = charset.encode(smessage);
                 socketChannel.write(byteBuffer);
-                chat.append("\n" + message);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        chatArrayAdapter.add(new ChatMessage(side, smessage));
+                        chatText.setText("");
+                    }
+                });
             }
             catch(Exception e) {
                 e.printStackTrace();
