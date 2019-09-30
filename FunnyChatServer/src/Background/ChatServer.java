@@ -23,13 +23,14 @@ import javafx.stage.Stage;
 
 public class ChatServer extends Application {
 	
+	static int num=0;
 	ExecutorService executorService;
 	ServerSocketChannel serverSocketChannel;
 	List<Client> connections = new Vector<Client>();
 	
 	void startServer() {
 		executorService = Executors.newFixedThreadPool(
-				Runtime.getRuntime().availableProcessors()
+				8
 		);
 		
 		try {
@@ -52,7 +53,6 @@ public class ChatServer extends Application {
 					displayText("[서버시작]");
 					btnStartStop.setText("stop");
 				});
-				
 				while (true) {
 					try {
 						SocketChannel socketChannel = serverSocketChannel.accept();
@@ -60,10 +60,10 @@ public class ChatServer extends Application {
 										 ": " + Thread.currentThread().getName() + "]";
 						Platform.runLater(()->displayText(message));
 						
-						Client client = new Client(socketChannel);
+						Client client = new Client(socketChannel, ++num);
 						connections.add(client);
 						
-						Platform.runLater(()->displayText("[연결 개수: " + connections.size() + "]")); 
+						Platform.runLater(()->displayText("[연결 갯 수: " + connections.size() + "]")); 
 					} catch (Exception e) {
 						if (serverSocketChannel.isOpen()) {
 							stopServer();
@@ -92,7 +92,7 @@ public class ChatServer extends Application {
 				executorService.shutdown();
 			}
 			Platform.runLater(()->{
-				displayText("[서버 종료]");
+				displayText("[서버종료]");
 				btnStartStop.setText("start");
 			});
 		} catch (Exception e) {
@@ -104,10 +104,20 @@ public class ChatServer extends Application {
 	class Client {
 		
 		SocketChannel socketChannel;
+		private int num;
 		
-		Client(SocketChannel socketChannel) {
+		Client(SocketChannel socketChannel, int num) {
 			this.socketChannel = socketChannel;
+			setThreadId(num);
 			receive();
+		}
+		
+		void setThreadId(int num) {
+			this.num = num;
+		}
+		
+		int getThreadId() {
+			return num;
 		}
 		
 		void receive() {
@@ -133,8 +143,11 @@ public class ChatServer extends Application {
 							Charset charset = Charset.forName("UTF-8");
 							String data = charset.decode(byteBuffer).toString();
 							
-							for (Client client : connections)  
+							for (Client client : connections) {
+								if (client.getThreadId() == num) continue;
 								client.send(data);
+							}
+								
 							
 						} catch(Exception e) {
 							try {
@@ -143,7 +156,7 @@ public class ChatServer extends Application {
 												 + Thread.currentThread().getName() + "]";
 								Platform.runLater(()->displayText(message));
 								socketChannel.close();
-							} catch(IOException e2)  { System.out.println("입출력 오류"); }
+							} catch(IOException e2)  {}
 							
 							break;
 						}
@@ -177,6 +190,8 @@ public class ChatServer extends Application {
 			executorService.submit(runnable);
 		}
 	}
+	
+	
 	
 	TextArea txtDisplay;
 	Button btnStartStop;
@@ -219,3 +234,5 @@ public class ChatServer extends Application {
 		launch(args);
 	}
 }
+	
+	
