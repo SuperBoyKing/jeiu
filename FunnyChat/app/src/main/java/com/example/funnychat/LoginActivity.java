@@ -4,9 +4,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.database.SQLException;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -15,13 +13,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.funnychat.background.ConnectDB;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -67,7 +58,6 @@ public class LoginActivity extends Activity {
         String email = loginEmail.getText().toString();
         String password = loginPassword.getText().toString();
         String name = null;
-        String userInfo[] = {email, password};
 
         if (!validate(email, password))  return false;
         BtnLogin.setEnabled(false);
@@ -85,14 +75,16 @@ public class LoginActivity extends Activity {
                 }, 1000);
 
         try {
-            String result;
+
             ConnectDB connectDB = new ConnectDB();
-            result = connectDB.execute(email, password, name, "login").get();
-            if (result.equals("true")) {
-                BtnLogin.setEnabled(true);
-                onLoginSuccess(userInfo);
-            } else {
+            String result = connectDB.execute(email, password, name, "login").get();
+            if (result.equals("false")) {
                 onLoginFailed();
+            } else {
+                BtnLogin.setEnabled(true);
+                name = result;
+                String userInfo[] = {email, name};
+                onLoginSuccess(userInfo);
             }
             Log.i("리턴 값 = ", result);
         } catch (Exception e) {

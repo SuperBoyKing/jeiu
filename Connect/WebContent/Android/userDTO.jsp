@@ -8,7 +8,7 @@
 	String type = request.getParameter("type");
 	
 	ConnectDB connectDB = ConnectDB.getInstance();
-	boolean returns = false;
+	String returns = null;
 	
 	if (type.equals("login")) {
 		returns = connectDB.signin(email, password);

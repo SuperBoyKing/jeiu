@@ -21,17 +21,18 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
+import com.google.gson.*;
+
 public class ChatServer extends Application {
 	
 	static int num=0;
 	ExecutorService executorService;
 	ServerSocketChannel serverSocketChannel;
 	List<Client> connections = new Vector<Client>();
+	List<String> userNames = new Vector<String>();
 	
 	void startServer() {
-		executorService = Executors.newFixedThreadPool(
-				8
-		);
+		executorService = Executors.newFixedThreadPool(8);
 		
 		try {
 			serverSocketChannel = ServerSocketChannel.open();
@@ -56,12 +57,22 @@ public class ChatServer extends Application {
 				while (true) {
 					try {
 						SocketChannel socketChannel = serverSocketChannel.accept();
-						String message = "[연결 수락: " + socketChannel.getRemoteAddress() +
-										 ": " + Thread.currentThread().getName() + "]";
+						ByteBuffer byteBuffer = ByteBuffer.allocate(100);
+						socketChannel.read(byteBuffer);
+						byteBuffer.flip();
+						Charset charset = Charset.forName("UTF-8");
+						
+						String message = charset.decode(byteBuffer).toString();
+						JsonParser par = new JsonParser();
+						JsonObject obj = (JsonObject) par.parse(message);
+						String name = obj.get("name").getAsString();
+						/*String message = "[연결 수락: " + socketChannel.getRemoteAddress() +
+										 ": " + Thread.currentThread().getName() + "]";*/
 						Platform.runLater(()->displayText(message));
 						
-						Client client = new Client(socketChannel, ++num);
+						Client client = new Client(socketChannel, name);
 						connections.add(client);
+						userNames.add(name);
 						
 						Platform.runLater(()->displayText("[연결 갯 수: " + connections.size() + "]")); 
 					} catch (Exception e) {
@@ -104,20 +115,17 @@ public class ChatServer extends Application {
 	class Client {
 		
 		SocketChannel socketChannel;
-		private int num;
+		private String name;
 		
-		Client(SocketChannel socketChannel, int num) {
+		Client(SocketChannel socketChannel, String name) {
 			this.socketChannel = socketChannel;
-			setThreadId(num);
+			this.name = name;
 			receive();
 		}
 		
-		void setThreadId(int num) {
-			this.num = num;
-		}
 		
-		int getThreadId() {
-			return num;
+		String getUserName() {
+			return name;
 		}
 		
 		void receive() {
@@ -135,17 +143,20 @@ public class ChatServer extends Application {
 								throw new IOException();
 							}
 							
-							String message = "[요청 처리: " + socketChannel.getRemoteAddress() + ": "
-									+ Thread.currentThread().getName() + "]";
-							Platform.runLater(()->displayText(message));
-							
 							byteBuffer.flip();
 							Charset charset = Charset.forName("UTF-8");
-							String data = charset.decode(byteBuffer).toString();
+							String message = charset.decode(byteBuffer).toString();
+							JsonParser par = new JsonParser();
+							JsonObject obj = (JsonObject) par.parse(message);
+							String name = obj.get("name").getAsString();
+							/*String message = "[요청 처리: " + socketChannel.getRemoteAddress() + ": "
+									+ Thread.currentThread().getName() + "]";*/
+							Platform.runLater(()->displayText(message));			
+							
 							
 							for (Client client : connections) {
-								if (client.getThreadId() == num) continue;
-								client.send(data);
+								if (client.getUserName().equals(name)) continue;
+								client.send(message);
 							}
 								
 							

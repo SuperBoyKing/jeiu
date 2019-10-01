@@ -48,7 +48,7 @@ public class ConnectDB {
 	}
 
 	
-	public boolean signup(String email, String password, String name) {
+	public String signup(String email, String password, String name) {
 		connect();
 		String sql = "insert into User(email, password, name) values(?, ?, ?)";
 		String select = "select email from User where email = ?";
@@ -59,7 +59,7 @@ public class ConnectDB {
 			rs = pstmt.executeQuery();
 			if(rs.next()) {
 				if (rs.getString(1).equals(email)) {
-					return false;
+					return "false";
 				}
 			} else {
 				pstmt = conn.prepareStatement(sql);
@@ -68,36 +68,36 @@ public class ConnectDB {
 				pstmt.setString(3, name);
 				pstmt.executeUpdate();
 				
-				return true;
+				return "true";
 			}
 		} catch (Exception e) {
 			e.getStackTrace();
 		} finally {
 			disconnect();
 		}
-		return false;
+		return "false";
 	}
 	
-	public boolean signin(String email, String password) {
+	public String signin(String email, String password) {
 		connect();
-		String sql = "select email from User where email = ?";
+		String sql = "select password, name from User where email = ?";
 		try {
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setString(1, email);
 			rs = pstmt.executeQuery();
 			if (rs.next()) {
 				if (rs.getString(1).equals(password)) {
-					return false;
+					return rs.getString("name");
 				}
 			}
-			return true;
+			return "false";
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
 			disconnect();
 		}
 		
-		return false;
+		return "false";
 	}
 
 }

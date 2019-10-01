@@ -3,6 +3,7 @@ package com.example.funnychat;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.example.funnychat.chat.ClientActivity;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -30,7 +31,6 @@ public class MainActivity extends AppCompatActivity {
     private AppBarConfiguration mAppBarConfiguration;
     private static final String USER_INFO = "user_Info";
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,8 +41,7 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                chat();
             }
         });
 
@@ -77,10 +76,17 @@ public class MainActivity extends AppCompatActivity {
 
     public void SycUserProfile(NavigationView navigationView) {
         View headerView = navigationView.getHeaderView(0);
-        String userInfo[] = getIntent().getStringArrayExtra(USER_INFO);
+        final String userInfo[] = getIntent().getStringArrayExtra(USER_INFO);
         TextView headerTitle = headerView.findViewById(R.id.textView_head);
         TextView headerSubTitle = headerView.findViewById(R.id.textView_sub);
         headerTitle.setText(userInfo[0]);
         headerSubTitle.setText(userInfo[1]);
+    }
+
+    public void chat() {
+        final String userInfo[] = getIntent().getStringArrayExtra(USER_INFO);
+        Intent ChatIntent = new Intent(MainActivity.this, ClientActivity.class);
+        ChatIntent.putExtra(USER_INFO, userInfo);
+        startActivity(ChatIntent);
     }
 }

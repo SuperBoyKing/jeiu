@@ -1,7 +1,6 @@
 package com.example.funnychat;
 
 import android.app.ProgressDialog;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -13,13 +12,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.funnychat.background.ConnectDB;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -77,7 +69,7 @@ public class SignupActivity extends AppCompatActivity {
                     public void run() {
                         progressDialog.dismiss();
                     }
-                }, 3000);
+                }, 1000);
 
         try {
             String result;
@@ -129,7 +121,7 @@ public class SignupActivity extends AppCompatActivity {
 
 
     public void onSignupSuccess() {
-        Toast.makeText(this, "success signup! ", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "회원가입이 완료되었습니다.", Toast.LENGTH_LONG).show();
         btnSignup.setEnabled(true);
         setResult(RESULT_OK, null);
         finish();
