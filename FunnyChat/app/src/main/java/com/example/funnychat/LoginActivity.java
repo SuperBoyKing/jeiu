@@ -12,7 +12,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.funnychat.background.ConnectDB;
+import com.example.funnychat.background.DBConnector;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -57,7 +57,7 @@ public class LoginActivity extends Activity {
 
         String email = loginEmail.getText().toString();
         String password = loginPassword.getText().toString();
-        String name = null;
+        String name = "empty";
 
         if (!validate(email, password))  return false;
         BtnLogin.setEnabled(false);
@@ -75,9 +75,8 @@ public class LoginActivity extends Activity {
                 }, 1000);
 
         try {
-
-            ConnectDB connectDB = new ConnectDB();
-            String result = connectDB.execute(email, password, name, "login").get();
+            DBConnector DBConnector = new DBConnector();
+            String result = DBConnector.execute(email, password, name, "login").get();
             if (result.equals("false")) {
                 onLoginFailed();
             } else {
@@ -127,7 +126,7 @@ public class LoginActivity extends Activity {
 
 
     public void onLoginFailed() {
-        Toast.makeText(getBaseContext(), "가입되지 않은 계정입니다.", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getBaseContext(), "계정이메일과 비밀번호를 확인해주세요.", Toast.LENGTH_SHORT).show();
         BtnLogin.setEnabled(true);
     }
 }

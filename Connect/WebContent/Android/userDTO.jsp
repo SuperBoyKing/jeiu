@@ -1,5 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="DB.ConnectDB"%>
+<%@ page import="DB.UserDAO"%>
+<%@page import="com.oreilly.servlet.multipart.DefaultFileRenamePolicy"%>
+<%@page import="com.oreilly.servlet.MultipartRequest"%>
+
 <%
 	request.setCharacterEncoding("UTF-8");
 	String email = request.getParameter("email");
@@ -7,7 +10,7 @@
 	String name = request.getParameter("name");
 	String type = request.getParameter("type");
 	
-	ConnectDB connectDB = ConnectDB.getInstance();
+	DB.UserDAO connectDB = DB.UserDAO.getInstance();
 	String returns = null;
 	
 	if (type.equals("login")) {
@@ -19,6 +22,5 @@
 	} else {
 		out.println("유효하지 않은 입력(type)");	
 	}
-
 %>
 

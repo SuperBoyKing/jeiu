@@ -11,7 +11,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.funnychat.background.ConnectDB;
+import com.example.funnychat.background.DBConnector;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -73,8 +73,8 @@ public class SignupActivity extends AppCompatActivity {
 
         try {
             String result;
-            ConnectDB connectDB = new ConnectDB();
-            result = connectDB.execute(email, password, name, "signup").get();
+            DBConnector DBConnector = new DBConnector();
+            result = DBConnector.execute(email, password, name, "signup").get();
             if (result.equals("true")) {
                 onSignupSuccess();
             } else {
