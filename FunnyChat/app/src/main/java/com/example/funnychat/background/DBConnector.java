@@ -44,5 +44,4 @@ public class DBConnector extends AsyncTask<String, Void, String> {
         }
         return receiveMsg;
     }
-
 }

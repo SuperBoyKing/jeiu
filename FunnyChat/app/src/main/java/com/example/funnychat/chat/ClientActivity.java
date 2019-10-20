@@ -2,25 +2,27 @@ package com.example.funnychat.chat;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
-import com.example.funnychat.background.FileTransfer;
+import com.example.funnychat.MainActivity;
+import com.example.funnychat.background.FileDownloader;
+import com.example.funnychat.background.FileUploader;
 import com.google.gson.*;
 
 import android.provider.MediaStore;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
@@ -28,9 +30,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.example.funnychat.R;
 import com.google.gson.JsonObject;
+import com.mysql.cj.xdevapi.Client;
+
 import org.json.JSONObject;
 
 import java.io.File;
@@ -50,9 +56,11 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
     private static final String TAG = ClientActivity.class.getSimpleName();
     private static final int REQUEST_FILE_CODE = 200;
     private static final int READ_REQUEST_CODE = 300;
+    private static final int WRITE_REQUEST_CODE = 300;
 
     SocketChannel socketChannel;
-    boolean left = true;
+    String position = "left";
+    String download_fileName;
     ChatArrayAdapter chatArrayAdapter;
     EditText chatText;
     ListView chatView;
@@ -62,6 +70,7 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
     ImageButton fileUpload;
     File file;
     Uri fileUri;
+    Bitmap bitmap;
 
     private static final String USER_INFO = "user_Info";
     Charset charset = Charset.forName("UTF-8");
@@ -81,11 +90,27 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
         chatView.setAdapter(chatArrayAdapter);
         chatView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
         chatView.setAdapter(chatArrayAdapter);
+        chatView.setTextFilterEnabled(true);
+
+        chatView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                ChatMessage chatlist = chatArrayAdapter.getItem(position);
+                if (chatlist.type.equals("File") && CheckForSDCard.isSDCardPresent()) {
+                    download_fileName = chatlist.message;
+                    DownloadFile();
+                } else {
+                    Toast.makeText(getApplicationContext(), chatlist.message, Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+
+
         sent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v)
             {
-                Thread sentThread = new Thread(new SendMessage());
+                Thread sentThread = new Thread(new SendMessage("Message"));
                 sentThread.start();
             }
         });
@@ -100,7 +125,6 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
                     EasyPermissions.requestPermissions(ClientActivity.this, getString(R.string.file_access),
                             READ_REQUEST_CODE, Manifest.permission.READ_EXTERNAL_STORAGE);
                 }
-                chatText.setFocusable(false);
                 hideFileBrowser();
             }
         });
@@ -109,11 +133,13 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
             public void onClick(View v)
             {
                 if (file != null) {
-                    FileTransfer fileTransfer = new FileTransfer(ClientActivity.this, file);
-                    fileTransfer.execute();
+                    FileUploader fileUploader = new FileUploader(ClientActivity.this, file);
+                    fileUploader.execute();
+                    Thread sentThread = new Thread(new SendMessage("File"));
+                    sentThread.start();
                 } else {
                     Toast.makeText(getApplicationContext(),
-                            "Please select a file first", Toast.LENGTH_LONG).show();
+                            "업로드할 파일 선택을 해주세요.", Toast.LENGTH_LONG).show();
                 }
                 chatText.setText("");
                 showFileBrowser();
@@ -127,80 +153,6 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
             }
         });
         startClient();
-    }
-
-    private void showFileBrowserIntent() {
-        Intent fileManager = new Intent(Intent.ACTION_GET_CONTENT);
-        fileManager.setType("*/*");
-        startActivityForResult(fileManager, REQUEST_FILE_CODE);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_FILE_CODE && resultCode == Activity.RESULT_OK)  {
-            fileUri = data.getData();
-            previewFile(fileUri);
-        }
-    }
-
-    private void previewFile(Uri uri) {
-        String filePath = getRealPathFromURIPath(uri, ClientActivity.this);
-        file = new File(filePath);
-        Log.d(TAG, "FileName " + file.getName());
-        chatText.setText(file.getName());
-
-        /*ContentResolver cR = this.getContentResolver();
-        String mime = cR.getType(uri);
-
-        if (mime != null && mime.contains("image")) {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inSampleSize = 8;
-
-            final Bitmap bitmap = BitmapFactory.decodeFile(filePath, options);
-        }*/
-    }
-
-    private String getRealPathFromURIPath(Uri contentURI, Activity activity) {
-        Cursor cursor = activity.getContentResolver().query(contentURI, null, null, null, null);
-        String realPath = "";
-        if (cursor == null) {
-            realPath = contentURI.getPath();
-        } else {
-            cursor.moveToFirst();
-            int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
-            realPath = cursor.getString(idx);
-        }
-        if (cursor != null) {
-            cursor.close();
-        }
-
-        return realPath;
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResult) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResult);
-        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResult, ClientActivity.this);
-    }
-
-    @Override
-    public void onPermissionsGranted(int requestCode, List<String> perms) {
-        showFileBrowserIntent();
-    }
-
-    @Override
-    public void onPermissionsDenied(int requestCode, List<String> perms) {
-        Log.d(TAG, "Permission has been denied");
-    }
-
-    private void hideFileBrowser() {
-        fileBrowser.setVisibility((View.GONE));
-        fileUpload.setVisibility(View.VISIBLE);
-    }
-
-    private void showFileBrowser() {
-        fileUpload.setVisibility(View.GONE);
-        fileBrowser.setVisibility(View.VISIBLE);
     }
 
     void startClient() {
@@ -259,13 +211,14 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
                 JsonParser parser = new JsonParser();
                 JsonObject obj = (JsonObject)parser.parse(data);
                 String name = obj.get("name").getAsString();
-                String text = obj.get("text").getAsString();
-                left = true;
+                String type = obj.get("type").getAsString();
+                String contents = obj.get("contents").getAsString();
+                position = "left";
 
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        chatArrayAdapter.add(new ChatMessage(left, name, text));
+                        chatArrayAdapter.add(new ChatMessage(position, name, type, contents));
                     }
                 });
             } catch (Exception e) {
@@ -277,22 +230,31 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
 
     class SendMessage implements Runnable
     {
+        private String type;
+
+        public SendMessage(String type) { this.type = type; }
         @Override
         public void run() {
             try {
                 final String[] userInfo = getIntent().getStringArrayExtra(USER_INFO);
-                final String text = chatText.getText().toString();
+                final String contents;
+                if (type.equals("Message")) {
+                    contents = chatText.getText().toString();
+                } else {
+                    contents = file.getName();
+                }
 
                 JSONObject message = new JSONObject();
                 message.put("name", userInfo[1]);
-                message.put("text", text);
+                message.put("type", type);
+                message.put("contents", contents);
                 ByteBuffer byteBuffer = charset.encode(String.valueOf(message));
                 socketChannel.write(byteBuffer);
-                left = false;
+                position = "right";
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        chatArrayAdapter.add(new ChatMessage(left, null, text));
+                        chatArrayAdapter.add(new ChatMessage(position, "", type, contents));
                         chatText.setText("");
                     }
                 });
@@ -305,4 +267,91 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
         }
     }
 
+    private void DownloadFile() {
+        FileDownloader fileDownloader = new FileDownloader(ClientActivity.this);
+        fileDownloader.execute("http://172.30.1.21:8080/Connect/upload/" + download_fileName);
+    }
+
+    private void showFileBrowserIntent() {
+        Intent fileManager = new Intent(Intent.ACTION_GET_CONTENT);
+        fileManager.setType("*/*");
+        startActivityForResult(fileManager, REQUEST_FILE_CODE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_FILE_CODE && resultCode == Activity.RESULT_OK)  {
+            fileUri = data.getData();
+            previewFile(fileUri);
+        }
+    }
+
+    private void previewFile(Uri uri) {
+        String filePath = getRealPathFromURIPath(uri, ClientActivity.this);
+        file = new File(filePath);
+        Log.d(TAG, "FileName " + file.getName());
+        chatText.setText(file.getName());
+
+        ContentResolver cR = this.getContentResolver();
+        String mime = cR.getType(uri);
+
+        if (mime != null && mime.contains("image")) {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inSampleSize = 5;
+
+            bitmap = BitmapFactory.decodeFile(filePath, options);
+        }
+        else {
+            bitmap = null;
+        }
+    }
+
+    private String getRealPathFromURIPath(Uri contentURI, Activity activity) {
+        Cursor cursor = activity.getContentResolver().query(contentURI, null, null, null, null);
+        String realPath = "";
+        if (cursor == null) {
+            realPath = contentURI.getPath();
+        } else {
+            cursor.moveToFirst();
+            int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
+            realPath = cursor.getString(idx);
+        }
+        if (cursor != null) {
+            cursor.close();
+        }
+
+        return realPath;
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResult) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResult);
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResult, ClientActivity.this);
+
+    }
+
+    @Override
+    public void onPermissionsGranted(int requestCode, List<String> perms) {
+        if (requestCode == READ_REQUEST_CODE) {
+            showFileBrowserIntent();
+        } else if (requestCode == WRITE_REQUEST_CODE){
+            DownloadFile();
+        }
+    }
+
+    @Override
+    public void onPermissionsDenied(int requestCode, List<String> perms) {
+        Log.d(TAG, "Permission has been denied");
+    }
+
+    private void hideFileBrowser() {
+        fileBrowser.setVisibility((View.GONE));
+        fileUpload.setVisibility(View.VISIBLE);
+    }
+
+    private void showFileBrowser() {
+        fileUpload.setVisibility(View.GONE);
+        fileBrowser.setVisibility(View.VISIBLE);
+    }
 }

@@ -72,7 +72,7 @@ public class LoginActivity extends Activity {
                     public void run() {
                         progressDialog.dismiss();
                     }
-                }, 1000);
+                }, 500);
 
         try {
             DBConnector DBConnector = new DBConnector();
@@ -88,6 +88,7 @@ public class LoginActivity extends Activity {
             Log.i("리턴 값 = ", result);
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
 
         return false;

@@ -69,7 +69,7 @@ public class SignupActivity extends AppCompatActivity {
                     public void run() {
                         progressDialog.dismiss();
                     }
-                }, 1000);
+                }, 1500);
 
         try {
             String result;

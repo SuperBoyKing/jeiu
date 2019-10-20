@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.funnychat.R;
@@ -17,9 +18,12 @@ import java.util.List;
 public class ChatArrayAdapter extends ArrayAdapter<ChatMessage> {
 
     private List<ChatMessage> chatMessageList = new ArrayList<ChatMessage>();
+    ImageView file;
     private TextView chatText;
     private TextView their_name;
-    private Context context;
+    Context context;
+    private ChatMessage chatMessageObj;
+    private View row;
 
     @Override
     public void add(ChatMessage object) {
@@ -41,19 +45,46 @@ public class ChatArrayAdapter extends ArrayAdapter<ChatMessage> {
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {
-        ChatMessage chatMessageObj = getItem(position);
-        View row = convertView;
+        chatMessageObj = getItem(position);
+        row = convertView;
         LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        if (!chatMessageObj.left) {
-            row = inflater.inflate(R.layout.my_message, parent, false);
-        } else {
-            row = inflater.inflate(R.layout.their_message, parent, false);
-            their_name = (TextView) row.findViewById(R.id.name);
-            their_name.setText(chatMessageObj.name);
-        }
 
+        if (chatMessageObj.position.equals("right")) {
+            if(chatMessageObj.type.equals("File")) {
+                row = inflater.inflate(R.layout.my_file, parent, false);
+                showUpFile();
+            } else {
+                row = inflater.inflate(R.layout.my_message, parent, false);
+                showUpText();
+            }
+
+        } else if (chatMessageObj.position.equals("left")) {
+            if (chatMessageObj.type.equals("File")) {
+                row = inflater.inflate(R.layout.their_file, parent, false);
+                showUpName();
+                showUpFile();
+            } else {
+                row = inflater.inflate(R.layout.their_message, parent, false);
+                showUpName();
+                showUpText();
+            }
+        }
+        return row;
+    }
+
+    private void showUpText() {
         chatText = (TextView) row.findViewById(R.id.message_body);
         chatText.setText(chatMessageObj.message);
-        return row;
+    }
+
+    private void showUpFile() {
+        file = row.findViewById(R.id.message_body);
+        chatText = row.findViewById(R.id.fileName);
+        chatText.setText(chatMessageObj.message);
+    }
+
+    private void showUpName() {
+        their_name = (TextView) row.findViewById(R.id.name);
+        their_name.setText(chatMessageObj.name);
     }
 }
