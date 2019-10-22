@@ -17,7 +17,7 @@ public class DBConnector extends AsyncTask<String, Void, String> {
     protected String doInBackground(String... params) {
         try {
             String str;
-            URL url = new URL("http://172.30.1.21:8080/Connect/Android/userDTO.jsp");
+            URL url = new URL("http://121.172.113.28:8080/Connect/Android/userDTO.jsp");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("Content-type", "application/x-www-form-urlencoded");
             conn.setRequestMethod("POST");

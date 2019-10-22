@@ -54,10 +54,10 @@ import pub.devrel.easypermissions.EasyPermissions.PermissionCallbacks;
 public class ClientActivity extends Activity implements PermissionCallbacks {
 
     private static final String TAG = ClientActivity.class.getSimpleName();
+    private static final String[] WRITE_PERMISSION = {"android.permission.WRITE_EXTERNAL_STORAGE"};
     private static final int REQUEST_FILE_CODE = 200;
-    private static final int READ_REQUEST_CODE = 300;
+    private static final int READ_REQUEST_CODE = 250;
     private static final int WRITE_REQUEST_CODE = 300;
-
     SocketChannel socketChannel;
     String position = "left";
     String download_fileName;
@@ -72,6 +72,7 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
     Uri fileUri;
     Bitmap bitmap;
 
+    MainActivity mainActivity = new MainActivity();
     private static final String USER_INFO = "user_Info";
     Charset charset = Charset.forName("UTF-8");
 
@@ -97,15 +98,18 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
                 ChatMessage chatlist = chatArrayAdapter.getItem(position);
                 if (chatlist.type.equals("File") && CheckForSDCard.isSDCardPresent()) {
-                    download_fileName = chatlist.message;
-                    DownloadFile();
+                    if (hasPermission(WRITE_PERMISSION)) {
+                        download_fileName = chatlist.message;
+                        DownloadFile();
+                    } else {
+                        requestPermission(WRITE_PERMISSION);
+                    }
+
                 } else {
                     Toast.makeText(getApplicationContext(), chatlist.message, Toast.LENGTH_LONG).show();
                 }
             }
         });
-
-
         sent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v)
@@ -152,10 +156,10 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
                 chatView.setSelection(chatArrayAdapter.getCount() -1);
             }
         });
-        startClient();
+        connectServer();
     }
 
-    void startClient() {
+    void connectServer() {
         Thread thread = new Thread() {
             @Override
             public void run() {
@@ -163,17 +167,18 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
                     final String[] userInfo = getIntent().getStringArrayExtra(USER_INFO);
                     socketChannel = SocketChannel.open();
                     socketChannel.configureBlocking(true);
-                    socketChannel.connect(new InetSocketAddress("172.30.1.21", 1000));
+                    socketChannel.connect(new InetSocketAddress("121.172.113.28", 1000));
+
                     JSONObject message = new JSONObject();
-                    message.put("type", "로그인");
-                    message.put("email", userInfo[0]);
                     message.put("name", userInfo[1]);
+                    message.put("type", "Connect");
+                    message.put("email", userInfo[0]);
 
                     ByteBuffer byteBuffer = charset.encode(String.valueOf(message));
                     socketChannel.write(byteBuffer);
                 } catch (Exception e) {
                     try {
-                        stopClient();
+                        mainActivity.stopClient();
                         return;
                     } catch(Exception e2) {}
                 }
@@ -184,52 +189,51 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
         thread.start();
     }
 
-    void stopClient() {
-        try {
-            chatText.setFocusable(false);
-            sent.setFocusable(false);
-            chatView.setFocusable(false);
-
-            if (socketChannel != null && socketChannel.isOpen()) {
-                socketChannel.close();
-            }
-        } catch (IOException e) {}
-    }
 
     void receive() {
-        while (true) {
-            try {
-                ByteBuffer byteBuffer = ByteBuffer.allocate(100);
-                int readByteCount = socketChannel.read(byteBuffer);
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        ByteBuffer byteBuffer = ByteBuffer.allocate(100);
+                        int readByteCount = socketChannel.read(byteBuffer);
 
-                if (readByteCount == -1) {
-                    throw new IOException();
-                }
-                byteBuffer.flip();
-                Charset charset = Charset.forName("UTF-8");
-                final String data = charset.decode(byteBuffer).toString();
-                JsonParser parser = new JsonParser();
-                JsonObject obj = (JsonObject)parser.parse(data);
-                String name = obj.get("name").getAsString();
-                String type = obj.get("type").getAsString();
-                String contents = obj.get("contents").getAsString();
-                position = "left";
+                        if (readByteCount == -1) {
+                            throw new IOException();
+                        }
+                        byteBuffer.flip();
+                        Charset charset = Charset.forName("UTF-8");
+                        final String data = charset.decode(byteBuffer).toString();
+                        JsonParser parser = new JsonParser();
+                        JsonObject obj = (JsonObject) parser.parse(data);
+                        String name = obj.get("name").getAsString();
+                        String type = obj.get("type").getAsString();
+                        String contents = obj.get("contents").getAsString();
+                        position = "left";
 
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        chatArrayAdapter.add(new ChatMessage(position, name, type, contents));
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                chatArrayAdapter.add(new ChatMessage(position, name, type, contents));
+                            }
+                        });
+                    } catch (Exception e) {
+                        mainActivity.stopClient();
+                        chatText.setFocusable(false);
+                        sent.setFocusable(false);
+                        chatView.setFocusable(false);
+                        fileBrowser.setFocusable(false);
+                        fileUpload.setFocusable(false);
+                        break;
                     }
-                });
-            } catch (Exception e) {
-                stopClient();
-                break;
+                }
             }
-        }
+        };
+        thread.start();
     }
 
-    class SendMessage implements Runnable
-    {
+    class SendMessage implements Runnable {
         private String type;
 
         public SendMessage(String type) { this.type = type; }
@@ -261,15 +265,36 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
             }
             catch(Exception e) {
                 e.printStackTrace();
-                stopClient();
+                mainActivity.stopClient();
+                chatText.setFocusable(false);
+                sent.setFocusable(false);
+                chatView.setFocusable(false);
+                fileBrowser.setFocusable(false);
+                fileUpload.setFocusable(false);
                 return;
             }
         }
     }
 
+    boolean hasPermission(String[] permission) {
+        int res = 0;
+        res = checkCallingOrSelfPermission(permission[0]);
+        if(!(res == PackageManager.PERMISSION_GRANTED)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private void requestPermission(String[] permission) {
+        if (Build.VERSION.SDK_INT >= 23) {
+            requestPermissions(WRITE_PERMISSION, WRITE_REQUEST_CODE);
+        }
+    }
+
     private void DownloadFile() {
         FileDownloader fileDownloader = new FileDownloader(ClientActivity.this);
-        fileDownloader.execute("http://172.30.1.21:8080/Connect/upload/" + download_fileName);
+        fileDownloader.execute("http://121.172.113.28:8080/Connect/upload/" + download_fileName);
     }
 
     private void showFileBrowserIntent() {
@@ -322,7 +347,6 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
 
         return realPath;
     }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResult) {

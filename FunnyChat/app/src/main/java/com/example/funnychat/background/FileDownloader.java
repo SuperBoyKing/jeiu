@@ -1,12 +1,15 @@
 package com.example.funnychat.background;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.example.funnychat.MainActivity;
 import com.example.funnychat.chat.ClientActivity;
 
 import java.io.BufferedInputStream;
@@ -51,21 +54,13 @@ public class FileDownloader extends AsyncTask<String, String, String> {
             conn.connect();
             int lengthOfFile = conn.getContentLength();
 
+            InputStream input = new BufferedInputStream(url.openStream(), 8192);
             fileName = file_url[0].substring(file_url[0].lastIndexOf('/') + 1, file_url[0].length());
             folder = Environment.getExternalStorageDirectory() + File.separator +"funnyDownloader/";
-            InputStream input = new BufferedInputStream(url.openStream(), 8192);
 
-            File directory = new File(folder);
-            File newFile = new File(directory.getAbsolutePath() + fileName);
-            if (!directory.exists()) {
-                directory.mkdirs();
-            }
+            File outputFile = new File(folder, fileName);
 
-            if (!newFile.exists()) {
-                newFile.createNewFile();
-            }
-
-            OutputStream fos = new FileOutputStream(folder + fileName);
+            OutputStream fos = new FileOutputStream(outputFile);
             BufferedOutputStream bos = new BufferedOutputStream(fos);
             byte data[] = new byte[1024];
             long total = 0;

@@ -1,7 +1,5 @@
 package com.example.funnychat;
 
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -23,15 +21,22 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
-import android.widget.EditText;
 import android.widget.TextView;
 
-import java.net.Socket;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
 
 public class MainActivity extends AppCompatActivity {
 
+    SocketChannel socketChannel;
     private AppBarConfiguration mAppBarConfiguration;
     private static final String USER_INFO = "user_Info";
+    Charset charset = Charset.forName("UTF-8");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,9 +47,7 @@ public class MainActivity extends AppCompatActivity {
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                chat();
-            }
+            public void onClick(View view) { chat(); }
         });
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
@@ -60,6 +63,45 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
+    }
+
+
+    /*public void startClient() {
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    final String[] userInfo = getIntent().getStringArrayExtra(USER_INFO);
+                    socketChannel = SocketChannel.open();
+                    socketChannel.configureBlocking(true);
+                    socketChannel.connect(new InetSocketAddress("121.172.113.28", 1000));
+
+                    JSONObject message = new JSONObject();
+                    message.put("email", userInfo[0]);
+                    message.put("type", "Login");
+                    message.put("name", userInfo[1]);
+
+                    ByteBuffer byteBuffer = charset.encode(String.valueOf(message));
+                    socketChannel.write(byteBuffer);
+                    socketChannel.close();
+                } catch (Exception e) {
+                    try {
+                        stopClient();
+                        return;
+                    } catch(Exception e2) {}
+                }
+            }
+
+        };
+        thread.start();
+    }*/
+
+    public void stopClient() {
+        try {
+            if (socketChannel != null && socketChannel.isOpen()) {
+                socketChannel.close();
+            }
+        } catch (IOException e) {}
     }
 
     @Override
