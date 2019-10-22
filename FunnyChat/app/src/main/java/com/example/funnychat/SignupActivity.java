@@ -13,26 +13,28 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.funnychat.background.DBConnector;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-
-
 public class SignupActivity extends AppCompatActivity {
 
     private static final String TAG = "SignupActivity";
 
-    @BindView(R.id.sign_email) EditText signupEmail;
-    @BindView(R.id.sign_password) EditText signupPassword;
-    @BindView(R.id.sign_passwordConfirm) EditText confirmPassword;
-    @BindView(R.id.sign_nickname) EditText signupNickname;
-    @BindView(R.id.btn_signup) Button btnSignup;
-    @BindView(R.id.txt_toLogin) TextView LoginLink;
+    EditText signupEmail;
+    EditText signupPassword;
+    EditText confirmPassword;
+    EditText signupNickname;
+    Button btnSignup;
+    TextView LoginLink;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_singup);
-        ButterKnife.bind(this);
+
+        signupEmail = findViewById(R.id.sign_email);
+        signupPassword = findViewById(R.id.sign_password);
+        confirmPassword = findViewById(R.id.sign_passwordConfirm);
+        signupNickname = findViewById(R.id.sign_nickname);
+        btnSignup = findViewById(R.id.btn_signup);
+        LoginLink = findViewById(R.id.txt_toLogin);
 
         btnSignup.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -48,7 +50,6 @@ public class SignupActivity extends AppCompatActivity {
             }
         });
     }
-
 
     public void signup() {
 
@@ -69,7 +70,7 @@ public class SignupActivity extends AppCompatActivity {
                     public void run() {
                         progressDialog.dismiss();
                     }
-                }, 1500);
+                }, 1000);
 
         try {
             String result;

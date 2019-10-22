@@ -18,6 +18,7 @@ import com.example.funnychat.background.FileDownloader;
 import com.example.funnychat.background.FileUploader;
 import com.google.gson.*;
 
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
@@ -30,12 +31,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import com.example.funnychat.R;
 import com.google.gson.JsonObject;
-import com.mysql.cj.xdevapi.Client;
 
 import org.json.JSONObject;
 
@@ -53,11 +51,13 @@ import pub.devrel.easypermissions.EasyPermissions.PermissionCallbacks;
 
 public class ClientActivity extends Activity implements PermissionCallbacks {
 
+    private static final String HOST_NAME = "192.168.0.13";
     private static final String TAG = ClientActivity.class.getSimpleName();
     private static final String[] WRITE_PERMISSION = {"android.permission.WRITE_EXTERNAL_STORAGE"};
     private static final int REQUEST_FILE_CODE = 200;
     private static final int READ_REQUEST_CODE = 250;
     private static final int WRITE_REQUEST_CODE = 300;
+
     SocketChannel socketChannel;
     String position = "left";
     String download_fileName;
@@ -97,7 +97,7 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
                 ChatMessage chatlist = chatArrayAdapter.getItem(position);
-                if (chatlist.type.equals("File") && CheckForSDCard.isSDCardPresent()) {
+                if (chatlist.type.equals("File") && isSDCardPresent()) {
                     if (hasPermission(WRITE_PERMISSION)) {
                         download_fileName = chatlist.message;
                         DownloadFile();
@@ -167,7 +167,7 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
                     final String[] userInfo = getIntent().getStringArrayExtra(USER_INFO);
                     socketChannel = SocketChannel.open();
                     socketChannel.configureBlocking(true);
-                    socketChannel.connect(new InetSocketAddress("121.172.113.28", 1000));
+                    socketChannel.connect(new InetSocketAddress(HOST_NAME, 1000));
 
                     JSONObject message = new JSONObject();
                     message.put("name", userInfo[1]);
@@ -294,7 +294,7 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
 
     private void DownloadFile() {
         FileDownloader fileDownloader = new FileDownloader(ClientActivity.this);
-        fileDownloader.execute("http://121.172.113.28:8080/Connect/upload/" + download_fileName);
+        fileDownloader.execute("http://" + HOST_NAME + ":8080/Connect/upload/" + download_fileName);
     }
 
     private void showFileBrowserIntent() {
@@ -367,6 +367,13 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
     @Override
     public void onPermissionsDenied(int requestCode, List<String> perms) {
         Log.d(TAG, "Permission has been denied");
+    }
+
+    public static boolean isSDCardPresent() {
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
+            return true;
+        else
+            return false;
     }
 
     private void hideFileBrowser() {

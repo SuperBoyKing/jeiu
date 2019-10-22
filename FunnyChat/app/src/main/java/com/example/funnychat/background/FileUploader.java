@@ -45,7 +45,7 @@ public class FileUploader extends AsyncTask<Void, Integer, String> {
         HttpResponse httpResponse;
         HttpEntity httpEntity;
         String responseString = null;
-        final String SERVER_PATH = "http://121.172.113.28:8080/Connect/Android/index.jsp";
+        final String SERVER_PATH = "http://192.168.0.13:8080/Connect/Android/index.jsp";
 
         try {
             HttpPostHC4 httpPost = new HttpPostHC4(SERVER_PATH);

@@ -6,8 +6,10 @@ import android.os.Bundle;
 import com.example.funnychat.chat.ClientActivity;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import android.view.LayoutInflater;
 import android.view.View;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -21,6 +23,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import org.json.JSONObject;
@@ -33,10 +37,13 @@ import java.nio.charset.Charset;
 
 public class MainActivity extends AppCompatActivity {
 
-    SocketChannel socketChannel;
     private AppBarConfiguration mAppBarConfiguration;
+    SocketChannel socketChannel;
     private static final String USER_INFO = "user_Info";
-    Charset charset = Charset.forName("UTF-8");
+    EditText roomName;
+    Button makeRoom;
+    Button cancelRoom;
+    View popupInputDialogView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +54,27 @@ public class MainActivity extends AppCompatActivity {
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) { chat(); }
+            public void onClick(View view) {
+                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+                alertDialogBuilder.setTitle("채팅방 개설");
+                alertDialogBuilder.setCancelable(false);
+                initMakeRoomDialog();
+                alertDialogBuilder.setView(popupInputDialogView);
+                final AlertDialog alertDialog = alertDialogBuilder.create();
+                alertDialog.show();
+                makeRoom.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        String room = roomName.getText().toString();
+                    }
+                });
+                cancelRoom.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        alertDialog.cancel();
+                    }
+                });
+            }
         });
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
@@ -65,36 +92,13 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupWithNavController(navigationView, navController);
     }
 
-
-    /*public void startClient() {
-        Thread thread = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    final String[] userInfo = getIntent().getStringArrayExtra(USER_INFO);
-                    socketChannel = SocketChannel.open();
-                    socketChannel.configureBlocking(true);
-                    socketChannel.connect(new InetSocketAddress("121.172.113.28", 1000));
-
-                    JSONObject message = new JSONObject();
-                    message.put("email", userInfo[0]);
-                    message.put("type", "Login");
-                    message.put("name", userInfo[1]);
-
-                    ByteBuffer byteBuffer = charset.encode(String.valueOf(message));
-                    socketChannel.write(byteBuffer);
-                    socketChannel.close();
-                } catch (Exception e) {
-                    try {
-                        stopClient();
-                        return;
-                    } catch(Exception e2) {}
-                }
-            }
-
-        };
-        thread.start();
-    }*/
+    private void initMakeRoomDialog() {
+        LayoutInflater layoutInflater = LayoutInflater.from(MainActivity.this);
+        popupInputDialogView = layoutInflater.inflate(R.layout.make_room, null);
+        roomName = popupInputDialogView.findViewById(R.id.room_name);
+        makeRoom = popupInputDialogView.findViewById(R.id.btn_make_room);
+        cancelRoom = popupInputDialogView.findViewById(R.id.btn_cancel_room);
+    }
 
     public void stopClient() {
         try {

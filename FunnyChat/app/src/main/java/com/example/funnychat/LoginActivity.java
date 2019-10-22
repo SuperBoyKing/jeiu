@@ -14,26 +14,26 @@ import android.widget.Toast;
 
 import com.example.funnychat.background.DBConnector;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-
 public class LoginActivity extends Activity {
 
     private static final String TAG = "LoginActivity";
     private static final String USER_INFO= "user_Info";
-
     private static final int REQUEST_SINGUP = 0;
 
-    @BindView(R.id.login_email) EditText loginEmail;
-    @BindView(R.id.login_password) EditText loginPassword;
-    @BindView(R.id.btn_login) Button BtnLogin;
-    @BindView(R.id.txt_Register) TextView SignupLink;
+    EditText loginEmail;
+    EditText loginPassword;
+    Button BtnLogin;
+    TextView SignupLink;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        ButterKnife.bind(this);
+
+        loginEmail = findViewById(R.id.login_email);
+        loginPassword = findViewById(R.id.login_password);
+        BtnLogin = findViewById(R.id.btn_login);
+        SignupLink = findViewById(R.id.txt_Register);
 
         BtnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -50,7 +50,6 @@ public class LoginActivity extends Activity {
             }
         });
     }
-
 
     public boolean login() throws SQLException {
         Log.d(TAG, "Login");
@@ -94,14 +93,12 @@ public class LoginActivity extends Activity {
         return false;
     }
 
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_SINGUP) {
             if (resultCode == RESULT_OK) {}
         }
     }
-
 
     public boolean validate(String email, String password) {
         if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
@@ -124,7 +121,6 @@ public class LoginActivity extends Activity {
         startActivity(mainIntent);
         finish();
     }
-
 
     public void onLoginFailed() {
         Toast.makeText(getBaseContext(), "계정이메일과 비밀번호를 확인해주세요.", Toast.LENGTH_SHORT).show();

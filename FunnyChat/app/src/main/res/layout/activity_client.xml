@@ -44,7 +44,6 @@
             android:background="@drawable/ic_file_upload_black_24dp"
             android:visibility="gone"/>
 
-
         <EditText
             android:id="@+id/chatText"
             android:layout_width="match_parent"
