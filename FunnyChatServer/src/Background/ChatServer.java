@@ -24,8 +24,7 @@ import javafx.stage.Stage;
 import com.google.gson.*;
 
 public class ChatServer extends Application {
-	
-	static int num=0;
+
 	ExecutorService executorService;
 	ServerSocketChannel serverSocketChannel;
 	List<Client> connections = new Vector<Client>();
@@ -44,7 +43,7 @@ public class ChatServer extends Application {
 				stopServer();
 			}
 			return;
-		}
+		}		
 		
 		Runnable runnable = new Runnable() {
 			
@@ -65,11 +64,14 @@ public class ChatServer extends Application {
 						String message = charset.decode(byteBuffer).toString();
 						JsonParser par = new JsonParser();
 						JsonObject obj = (JsonObject) par.parse(message);
+						String JSONmessage = String.valueOf(obj).replace(',', ' ').replace('"', ' ');
 						String name = obj.get("name").getAsString();
-						/*String message = "[연결 수락: " + socketChannel.getRemoteAddress() +
-										 ": " + Thread.currentThread().getName() + "]";*/
-						Platform.runLater(()->displayText(message));
 						
+						for (String username : userNames) {
+							if (username.equals(name)) return;
+						}
+						
+						Platform.runLater(()->displayText(JSONmessage));
 						Client client = new Client(socketChannel, name);
 						connections.add(client);
 						userNames.add(name);
@@ -148,11 +150,9 @@ public class ChatServer extends Application {
 							String message = charset.decode(byteBuffer).toString();
 							JsonParser par = new JsonParser();
 							JsonObject obj = (JsonObject) par.parse(message);
+							String JSONmessage = String.valueOf(obj).replace(',', ' ').replace('"', ' ');
 							String name = obj.get("name").getAsString();
-							/*String message = "[요청 처리: " + socketChannel.getRemoteAddress() + ": "
-									+ Thread.currentThread().getName() + "]";*/
-							Platform.runLater(()->displayText(message));			
-							
+							Platform.runLater(()->displayText(JSONmessage));
 							
 							for (Client client : connections) {
 								if (client.getUserName().equals(name)) continue;
@@ -176,7 +176,6 @@ public class ChatServer extends Application {
 			};
 			executorService.submit(runnable);
 		}
-		
 		
 		void send(String data) {
 			Runnable runnable = new Runnable() {
@@ -230,7 +229,6 @@ public class ChatServer extends Application {
 		root.setTop(btnStartStop);
 		
 		Scene scene = new Scene(root);
-		//scene.getStylesheets().add(getClass().getResource("server.css").toString());
 		primaryStage.setScene(scene);
 		primaryStage.setTitle("Server");
 		primaryStage.setOnCloseRequest(event->stopServer());
