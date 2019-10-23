@@ -23,9 +23,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONObject;
 
@@ -34,6 +38,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -44,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
     Button makeRoom;
     Button cancelRoom;
     View popupInputDialogView;
+    ListView roomList;
+    ArrayList<String> arrayList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +58,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        ArrayAdapter<String> roomAdapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_1, arrayList);
+        roomList = findViewById(R.id.room_list);
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -66,12 +76,20 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View view) {
                         String room = roomName.getText().toString();
+                        arrayList.add(room);
+                        Toast.makeText(MainActivity.this, "방 생성 완료!", Toast.LENGTH_LONG).show();
                     }
                 });
                 cancelRoom.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         alertDialog.cancel();
+                    }
+                });
+                roomList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        chat();
                     }
                 });
             }
@@ -91,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
     }
+
 
     private void initMakeRoomDialog() {
         LayoutInflater layoutInflater = LayoutInflater.from(MainActivity.this);
