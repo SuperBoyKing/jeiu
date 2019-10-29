@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -8,17 +9,29 @@
     android:focusableInTouchMode="true">
 
     <ListView
-        android:id="@+id/room_list"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:id="@+id/roomView"
+        android:layout_weight="2"
+        android:layout_height="wrap_content"
+        android:divider="#fff" />
 
-    <TextView
-        android:id="@+id/text_home"
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="@dimen/fab_margin"
+            srcCompat="@android:drawable/ic_dialog_email"/>
+
+    </LinearLayout>
+
+
+    <!--<TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:textAlignment="center"
-        android:textSize="20sp" />
-</LinearLayout>
+        android:id="@+id/roomName"
+        android:padding="5dp"
+        android:textSize="18dp"
+        android:layout_alignParentleft="true"
+        android:text="Placeholder message"
+        />-->

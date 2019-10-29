@@ -1,15 +1,21 @@
 package com.example.funnychat;
 
 import android.content.Intent;
+import android.database.DataSetObserver;
 import android.os.Bundle;
 
 import com.example.funnychat.chat.ClientActivity;
+import com.example.funnychat.ui.home.HomeFragment;
+import com.example.funnychat.ui.home.HomeViewModel;
+import com.example.funnychat.ui.home.RoomInfo;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import android.view.LayoutInflater;
 import android.view.View;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -24,33 +30,23 @@ import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import org.json.JSONObject;
-
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
     SocketChannel socketChannel;
     private static final String USER_INFO = "user_Info";
-    EditText roomName;
-    Button makeRoom;
-    Button cancelRoom;
-    View popupInputDialogView;
+    private final static String ROOM_NAME = "room_name";
+
     ListView roomList;
-    ArrayList<String> arrayList = new ArrayList<>();
+    String room;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,43 +54,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        ArrayAdapter<String> roomAdapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, arrayList);
-        roomList = findViewById(R.id.room_list);
-        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
-                alertDialogBuilder.setTitle("채팅방 개설");
-                alertDialogBuilder.setCancelable(false);
-                initMakeRoomDialog();
-                alertDialogBuilder.setView(popupInputDialogView);
-                final AlertDialog alertDialog = alertDialogBuilder.create();
-                alertDialog.show();
-                makeRoom.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        String room = roomName.getText().toString();
-                        arrayList.add(room);
-                        Toast.makeText(MainActivity.this, "방 생성 완료!", Toast.LENGTH_LONG).show();
-                    }
-                });
-                cancelRoom.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        alertDialog.cancel();
-                    }
-                });
-                roomList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        chat();
-                    }
-                });
-            }
-        });
-
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
         SycUserProfile(navigationView);
@@ -108,16 +67,46 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
+        /*FloatingActionButton fab = findViewById(R.id.fab);
+        roomName = (EditText)findViewById(R.id.room_name);
+        roomList = (ListView)findViewById(R.id.roomView);
+        //chat();
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+                alertDialogBuilder.setTitle("채팅방 개설");
+                alertDialogBuilder.setCancelable(false);
+                initMakeRoomDialog();
+                alertDialogBuilder.setView(popupInputDialogView);
+                final AlertDialog alertDialog = alertDialogBuilder.create();
+                alertDialog.show();
+                makeRoom.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        room = roomName.getText().toString();
+                        Toast.makeText(MainActivity.this, "방 생성 완료!", Toast.LENGTH_LONG).show();
+                        alertDialog.cancel();
+                    }
+                });
+                cancelRoom.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        alertDialog.cancel();
+                    }
+                });
+            }
+        });
+
+      /*roomList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                chat();
+            }
+        });*/
     }
 
 
-    private void initMakeRoomDialog() {
-        LayoutInflater layoutInflater = LayoutInflater.from(MainActivity.this);
-        popupInputDialogView = layoutInflater.inflate(R.layout.make_room, null);
-        roomName = popupInputDialogView.findViewById(R.id.room_name);
-        makeRoom = popupInputDialogView.findViewById(R.id.btn_make_room);
-        cancelRoom = popupInputDialogView.findViewById(R.id.btn_cancel_room);
-    }
 
     public void stopClient() {
         try {
@@ -142,18 +131,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void SycUserProfile(NavigationView navigationView) {
-        View headerView = navigationView.getHeaderView(0);
         final String userInfo[] = getIntent().getStringArrayExtra(USER_INFO);
+        View headerView = navigationView.getHeaderView(0);
         TextView headerTitle = headerView.findViewById(R.id.textView_head);
         TextView headerSubTitle = headerView.findViewById(R.id.textView_sub);
         headerTitle.setText(userInfo[0]);
         headerSubTitle.setText(userInfo[1]);
     }
 
-    public void chat() {
+    /*public void chat() {
         final String userInfo[] = getIntent().getStringArrayExtra(USER_INFO);
-        Intent ChatIntent = new Intent(MainActivity.this, ClientActivity.class);
+        Intent ChatIntent = new Intent(MainActivity.this, HomeFragment.class);
         ChatIntent.putExtra(USER_INFO, userInfo);
-        startActivity(ChatIntent);
-    }
+        //startActivity(ChatIntent);
+    }*/
 }

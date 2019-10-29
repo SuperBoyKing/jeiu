@@ -25,15 +25,15 @@ public class ChatArrayAdapter extends ArrayAdapter<ChatMessage> {
     private ChatMessage chatMessageObj;
     private View row;
 
+    public ChatArrayAdapter(Context context, int textView) {
+        super(context, textView);
+        this.context = context;
+    }
+
     @Override
     public void add(ChatMessage object) {
         chatMessageList.add(object);
         super.add(object);
-    }
-
-    public ChatArrayAdapter(Context context, int textView) {
-        super(context, textView);
-        this.context = context;
     }
 
     public int getCount() {

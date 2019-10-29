@@ -26,7 +26,6 @@
             android:layout_height="wrap_content"
             android:hint="방 제목 작성"
             android:inputType="text" />
-
     </TableRow>
 
     <TableRow

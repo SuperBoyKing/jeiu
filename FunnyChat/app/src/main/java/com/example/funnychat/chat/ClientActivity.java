@@ -90,7 +90,6 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
         chatArrayAdapter = new ChatArrayAdapter(getApplicationContext(), R.layout.my_message);
         chatView.setAdapter(chatArrayAdapter);
         chatView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
-        chatView.setAdapter(chatArrayAdapter);
         chatView.setTextFilterEnabled(true);
 
         chatView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -188,7 +187,6 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
         };
         thread.start();
     }
-
 
     void receive() {
         Thread thread = new Thread() {
