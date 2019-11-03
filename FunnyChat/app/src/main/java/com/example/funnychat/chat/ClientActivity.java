@@ -13,7 +13,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
-import com.example.funnychat.MainActivity;
 import com.example.funnychat.background.FileDownloader;
 import com.example.funnychat.background.FileUploader;
 import com.google.gson.*;
@@ -40,6 +39,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
@@ -51,7 +51,7 @@ import pub.devrel.easypermissions.EasyPermissions.PermissionCallbacks;
 
 public class ClientActivity extends Activity implements PermissionCallbacks {
 
-    private static final String HOST_NAME = "192.168.0.13";
+    private static final String HOST_NAME = "172.30.1.21";
     private static final String TAG = ClientActivity.class.getSimpleName();
     private static final String[] WRITE_PERMISSION = {"android.permission.WRITE_EXTERNAL_STORAGE"};
     private static final int REQUEST_FILE_CODE = 200;
@@ -72,7 +72,6 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
     Uri fileUri;
     Bitmap bitmap;
 
-    MainActivity mainActivity = new MainActivity();
     private static final String USER_INFO = "user_Info";
     Charset charset = Charset.forName("UTF-8");
 
@@ -155,7 +154,14 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
                 chatView.setSelection(chatArrayAdapter.getCount() -1);
             }
         });
+
         connectServer();
+    }
+
+    @Override
+    public void onBackPressed() {
+        stopClient();
+        super.onBackPressed();
     }
 
     void connectServer() {
@@ -175,9 +181,10 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
 
                     ByteBuffer byteBuffer = charset.encode(String.valueOf(message));
                     socketChannel.write(byteBuffer);
+
                 } catch (Exception e) {
                     try {
-                        mainActivity.stopClient();
+                        stopClient();
                         return;
                     } catch(Exception e2) {}
                 }
@@ -186,6 +193,14 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
 
         };
         thread.start();
+    }
+
+    public void stopClient() {
+        try {
+            if (socketChannel != null && socketChannel.isOpen()) {
+                socketChannel.close();
+            }
+        } catch (IOException e) {}
     }
 
     void receive() {
@@ -217,12 +232,9 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
                             }
                         });
                     } catch (Exception e) {
-                        mainActivity.stopClient();
-                        chatText.setFocusable(false);
-                        sent.setFocusable(false);
-                        chatView.setFocusable(false);
-                        fileBrowser.setFocusable(false);
-                        fileUpload.setFocusable(false);
+                        e.printStackTrace();
+                        stopClient();
+//                        disableToUI();
                         break;
                     }
                 }
@@ -263,12 +275,8 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
             }
             catch(Exception e) {
                 e.printStackTrace();
-                mainActivity.stopClient();
-                chatText.setFocusable(false);
-                sent.setFocusable(false);
-                chatView.setFocusable(false);
-                fileBrowser.setFocusable(false);
-                fileUpload.setFocusable(false);
+                stopClient();
+//                disableToUI();
                 return;
             }
         }
@@ -280,7 +288,6 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
         if(!(res == PackageManager.PERMISSION_GRANTED)) {
             return false;
         }
-
         return true;
     }
 
@@ -350,7 +357,6 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResult) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResult);
         EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResult, ClientActivity.this);
-
     }
 
     @Override
@@ -382,5 +388,13 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
     private void showFileBrowser() {
         fileUpload.setVisibility(View.GONE);
         fileBrowser.setVisibility(View.VISIBLE);
+    }
+
+    void disableToUI() {
+        chatText.setFocusable(false);
+        sent.setFocusable(false);
+        chatView.setFocusable(false);
+        fileBrowser.setFocusable(false);
+        fileUpload.setFocusable(false);
     }
 }

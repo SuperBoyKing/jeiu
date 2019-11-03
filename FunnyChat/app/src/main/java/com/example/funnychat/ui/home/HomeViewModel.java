@@ -25,8 +25,6 @@ public class HomeViewModel extends ArrayAdapter<RoomInfo> {
     public HomeViewModel(Context context, int values) {
         super(context, values);
         this.context = context;
-        /*mText = new MutableLiveData<>();
-        mText.setValue("This is home fragment");*/
     }
 
     public void add(RoomInfo object) {
@@ -48,7 +46,4 @@ public class HomeViewModel extends ArrayAdapter<RoomInfo> {
         return row;
     }
 
-    /*public LiveData<String> getText() {
-        return mText;
-    }*/
 }

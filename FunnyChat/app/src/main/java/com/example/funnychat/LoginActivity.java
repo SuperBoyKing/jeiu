@@ -114,7 +114,6 @@ public class LoginActivity extends Activity {
         return true;
     }
 
-
     public void onLoginSuccess(String[] userInfo) {
         Intent mainIntent = new Intent(getApplicationContext(), MainActivity.class);
         mainIntent.putExtra(USER_INFO, userInfo);

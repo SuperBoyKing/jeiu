@@ -45,9 +45,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String USER_INFO = "user_Info";
     private final static String ROOM_NAME = "room_name";
 
-    ListView roomList;
-    String room;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,54 +64,18 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
-        /*FloatingActionButton fab = findViewById(R.id.fab);
-        roomName = (EditText)findViewById(R.id.room_name);
-        roomList = (ListView)findViewById(R.id.roomView);
-        //chat();
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
-                alertDialogBuilder.setTitle("채팅방 개설");
-                alertDialogBuilder.setCancelable(false);
-                initMakeRoomDialog();
-                alertDialogBuilder.setView(popupInputDialogView);
-                final AlertDialog alertDialog = alertDialogBuilder.create();
-                alertDialog.show();
-                makeRoom.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        room = roomName.getText().toString();
-                        Toast.makeText(MainActivity.this, "방 생성 완료!", Toast.LENGTH_LONG).show();
-                        alertDialog.cancel();
-                    }
-                });
-                cancelRoom.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        alertDialog.cancel();
-                    }
-                });
-            }
-        });
-
-      /*roomList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                chat();
-            }
-        });*/
+        /*final String userInfo[] = getIntent().getStringArrayExtra(USER_INFO);
+        ChatSocket chatSocket = new ChatSocket(userInfo);
+        chatSocket.connectServer();*/
     }
 
-
-
-    public void stopClient() {
+    /*public void stopClient() {
         try {
             if (socketChannel != null && socketChannel.isOpen()) {
                 socketChannel.close();
             }
         } catch (IOException e) {}
-    }
+    }*/
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -138,11 +99,4 @@ public class MainActivity extends AppCompatActivity {
         headerTitle.setText(userInfo[0]);
         headerSubTitle.setText(userInfo[1]);
     }
-
-    /*public void chat() {
-        final String userInfo[] = getIntent().getStringArrayExtra(USER_INFO);
-        Intent ChatIntent = new Intent(MainActivity.this, HomeFragment.class);
-        ChatIntent.putExtra(USER_INFO, userInfo);
-        //startActivity(ChatIntent);
-    }*/
 }
