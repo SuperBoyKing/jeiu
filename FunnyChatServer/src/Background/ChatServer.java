@@ -23,14 +23,18 @@ import javafx.stage.Stage;
 
 import com.google.gson.*;
 
+import Background.ChatServer.Client;
+
 public class ChatServer extends Application {
 
+	String Room;
 	ExecutorService executorService;
 	ServerSocketChannel serverSocketChannel;
 	List<Client> connections = new Vector<Client>();
 	List<String> userNames = new Vector<String>();
+	List<String> roomList = new Vector<String>();
 	
-	void startServer() {
+	public void startServer() {
 		executorService = Executors.newFixedThreadPool(8);
 		
 		try {
@@ -66,14 +70,9 @@ public class ChatServer extends Application {
 						JsonObject obj = (JsonObject) par.parse(message);
 						String JSONmessage = String.valueOf(obj).replace(',', ' ').replace('"', ' ');
 						String name = obj.get("name").getAsString();
-						
-						for (String username : userNames) {
-							if (username.equals(name)) return;
-						}
-						
+
 						Platform.runLater(()->displayText(JSONmessage));
-						Client client = new Client(socketChannel, name);
-						connections.add(client);
+						connections.add(new Client(socketChannel, name));
 						userNames.add(name);
 						
 						Platform.runLater(()->displayText("[연결 갯 수: " + connections.size() + "]")); 
@@ -90,7 +89,7 @@ public class ChatServer extends Application {
 	}
 	
 	
-	void stopServer() {
+	public void stopServer() {
 		try {
 			Iterator<Client> iterator = connections.iterator();
 			while (iterator.hasNext()) {
@@ -124,8 +123,7 @@ public class ChatServer extends Application {
 			this.name = name;
 			receive();
 		}
-		
-		
+				
 		String getUserName() {
 			return name;
 		}
@@ -157,10 +155,9 @@ public class ChatServer extends Application {
 							for (Client client : connections) {
 								if (client.getUserName().equals(name)) continue;
 								client.send(message);
-							}
-								
+							}					
 							
-						} catch(Exception e) {
+						} catch (Exception e) {
 							try {
 								connections.remove(Client.this);
 								String message = "[클라이언트 통신 끊김: " + socketChannel.getRemoteAddress() + ": "
@@ -200,7 +197,6 @@ public class ChatServer extends Application {
 			executorService.submit(runnable);
 		}
 	}
-	
 	
 	
 	TextArea txtDisplay;
