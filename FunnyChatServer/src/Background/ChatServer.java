@@ -68,16 +68,16 @@ public class ChatServer extends Application {
 						String message = charset.decode(byteBuffer).toString();
 						JsonParser par = new JsonParser();
 						JsonObject obj = (JsonObject) par.parse(message);
-						String JSONmessage = String.valueOf(obj).replace(',', ' ').replace('"', ' ');
+						String JSONmessage = String.valueOf(obj);
 						String name = obj.get("name").getAsString();
 
-						Platform.runLater(()->displayText(JSONmessage));
 						connections.add(new Client(socketChannel, name));
 						userNames.add(name);
 						
 						Platform.runLater(()->displayText("[연결 갯 수: " + connections.size() + "]")); 
 					} catch (Exception e) {
 						if (serverSocketChannel.isOpen()) {
+							e.printStackTrace();
 							stopServer();
 						}
 						break;
@@ -159,10 +159,11 @@ public class ChatServer extends Application {
 							
 						} catch (Exception e) {
 							try {
+								e.printStackTrace();
 								connections.remove(Client.this);
-								String message = "[클라이언트 통신 끊김: " + socketChannel.getRemoteAddress() + ": "
+								/*String message = "[클라이언트 통신 끊김: " + socketChannel.getRemoteAddress() + ": "
 												 + Thread.currentThread().getName() + "]";
-								Platform.runLater(()->displayText(message));
+								Platform.runLater(()->displayText(message));*/
 								socketChannel.close();
 							} catch(IOException e2)  {}
 							

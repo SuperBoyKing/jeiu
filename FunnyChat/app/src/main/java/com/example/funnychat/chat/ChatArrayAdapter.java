@@ -68,6 +68,9 @@ public class ChatArrayAdapter extends ArrayAdapter<ChatMessage> {
                 showUpName();
                 showUpText();
             }
+        } else {
+            row = inflater.inflate(R.layout.center_message, parent, false);
+            showUpText();
         }
         return row;
     }

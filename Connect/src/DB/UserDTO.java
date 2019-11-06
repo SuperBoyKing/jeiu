@@ -7,6 +7,7 @@ public class UserDTO {
 	private String name;
 	private String type;
 	private String room;
+	private String message;
 	
 	private static UserDTO instance = new UserDTO();
 	
@@ -14,6 +15,17 @@ public class UserDTO {
 		return instance;
 	}
 	
+	
+	public String getMessage() {
+		return message;
+	}
+
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+
 	public String getEmail() {
 		return email;
 	}

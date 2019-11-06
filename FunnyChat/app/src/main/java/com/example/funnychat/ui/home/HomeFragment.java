@@ -34,9 +34,7 @@ public class HomeFragment extends Fragment {
     View popupInputDialogView;
     String room;
 
-    public HomeFragment() {
-
-    }
+    public HomeFragment() {}
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                          ViewGroup container, Bundle savedInstanceState) {
@@ -53,13 +51,7 @@ public class HomeFragment extends Fragment {
                  startActivity(intent);
              }
          });
-        try {
-            RoomCreator roomCreator = new RoomCreator();
-            String select = roomCreator.execute(userInfo[0], room, "select").get();
-            parse(select);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        selectRoomList(userInfo);
         FloatingActionButton fab = (FloatingActionButton) root.findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -141,5 +133,15 @@ public class HomeFragment extends Fragment {
             e.printStackTrace();
         }
         return 0;
+    }
+
+    public void selectRoomList(String[] userInfo) {
+        try {
+            RoomCreator roomCreator = new RoomCreator();
+            String select = roomCreator.execute(userInfo[0], room, "select").get();
+            parse(select);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

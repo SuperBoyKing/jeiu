@@ -18,10 +18,11 @@ public class UserDAO {
 	PreparedStatement pstmt = null;
 	ResultSet rs = null;
 	
+	String failed = "failed";
+	String success = "success";
+	
 	String jdbc_driver = "com.mysql.cj.jdbc.Driver";
 	String jdbc_url = "jdbc:mysql://pjs.chgycbit5egq.ap-northeast-2.rds.amazonaws.com/FunnyChat?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC"; 
-	String falied = "false";
-	String success = "true";
 	
 	void connect() {
 		try {
@@ -50,6 +51,7 @@ public class UserDAO {
 		}
 	}
 	
+	
 	public String signup(UserDTO userDTO) {
 		connect();
 		String sql = "insert into User(email, password, name) values(?, ?, ?)";
@@ -61,7 +63,7 @@ public class UserDAO {
 			rs = pstmt.executeQuery();
 			if(rs.next()) {
 				if (rs.getString(1).equals(userDTO.getEmail())) {
-					return falied;
+					return failed;
 				}
 			} else {
 				pstmt = conn.prepareStatement(sql);
@@ -77,9 +79,10 @@ public class UserDAO {
 		} finally {
 			disconnect();
 		}
-		return falied;
+		return failed;
 	}
 		
+	
 	public String signin(UserDTO userDTO) {
 		connect();
 		String sql = "select password, name from User where email = ?";
@@ -92,15 +95,16 @@ public class UserDAO {
 					return rs.getString("name");
 				}
 			}
-			return falied;
+			return failed;
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
 			disconnect();
 		}
 		
-		return falied;
+		return failed;
 	}
+	
 	
 	public String createRoom(UserDTO userDTO) {
 		connect();
@@ -113,7 +117,7 @@ public class UserDAO {
 			rs = pstmt.executeQuery();
 			if(rs.next()) {
 				if (rs.getString(1).equals(userDTO.getRoom())) {
-					return "false";
+					return failed;
 				}
 			} else {
 				pstmt = conn.prepareStatement(sql);
@@ -121,7 +125,7 @@ public class UserDAO {
 				pstmt.setString(2, userDTO.getEmail());
 				pstmt.executeUpdate();
 				
-				return "true";
+				return success;
 			}
 		} catch (Exception e) {
 			e.getStackTrace();
@@ -129,8 +133,9 @@ public class UserDAO {
 			disconnect();
 		}
 		
-		return "false";
+		return failed;
 	}
+	
 	
 	public ArrayList<UserDTO> showList() {
 		connect();
@@ -153,6 +158,23 @@ public class UserDAO {
 			disconnect();
 		}
 		return roomList;
+	}
+	
+	
+	public void saveChat(UserDTO userDTO) {
+		connect();
+		String sql = "insert into Chat(email, message) values(?, ?)";
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, userDTO.getEmail());
+			pstmt.setString(2, userDTO.getMessage());
+			pstmt.executeUpdate();
+		} catch (Exception e) {
+			e.getStackTrace();
+		} finally {
+			disconnect();
+		}
 	}
 
 }

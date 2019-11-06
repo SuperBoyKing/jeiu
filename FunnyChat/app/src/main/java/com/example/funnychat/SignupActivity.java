@@ -76,7 +76,7 @@ public class SignupActivity extends AppCompatActivity {
             String result;
             DBConnector DBConnector = new DBConnector();
             result = DBConnector.execute(email, password, name, "signup").get();
-            if (result.equals("true")) {
+            if (result.equals(" success")) {
                 onSignupSuccess();
             } else {
                 onSignupFailed();

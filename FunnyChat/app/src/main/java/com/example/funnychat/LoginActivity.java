@@ -76,7 +76,7 @@ public class LoginActivity extends Activity {
         try {
             DBConnector DBConnector = new DBConnector();
             String result = DBConnector.execute(email, password, name, "login").get();
-            if (result.equals("false")) {
+            if (result.equals(" failed")) {
                 onLoginFailed();
             } else {
                 BtnLogin.setEnabled(true);
@@ -122,7 +122,7 @@ public class LoginActivity extends Activity {
     }
 
     public void onLoginFailed() {
-        Toast.makeText(getBaseContext(), "계정이메일과 비밀번호를 확인해주세요.", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getBaseContext(), "계정이메일 혹은 비밀번호를 확인해주세요.", Toast.LENGTH_SHORT).show();
         BtnLogin.setEnabled(true);
     }
 }

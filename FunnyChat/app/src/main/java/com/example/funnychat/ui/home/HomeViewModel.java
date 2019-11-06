@@ -17,7 +17,6 @@ public class HomeViewModel extends ArrayAdapter<RoomInfo> {
 
     private List<RoomInfo> roomList = new ArrayList<RoomInfo>();
     private final Context context;
-    private MutableLiveData<String> mText;
     private RoomInfo roomInfo;
     private TextView textView;
     private View row;

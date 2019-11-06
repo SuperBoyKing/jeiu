@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
+import com.example.funnychat.background.ChatStore;
 import com.example.funnychat.background.FileDownloader;
 import com.example.funnychat.background.FileUploader;
 import com.google.gson.*;
@@ -71,6 +72,7 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
     File file;
     Uri fileUri;
     Bitmap bitmap;
+    Thread sentThread;
 
     private static final String USER_INFO = "user_Info";
     Charset charset = Charset.forName("UTF-8");
@@ -94,17 +96,17 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
         chatView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                ChatMessage chatlist = chatArrayAdapter.getItem(position);
-                if (chatlist.type.equals("File") && isSDCardPresent()) {
+                ChatMessage chatList = chatArrayAdapter.getItem(position);
+                if (chatList.type.equals("File") && isSDCardPresent()) {
                     if (hasPermission(WRITE_PERMISSION)) {
-                        download_fileName = chatlist.message;
+                        download_fileName = chatList.message;
                         DownloadFile();
                     } else {
                         requestPermission(WRITE_PERMISSION);
                     }
 
                 } else {
-                    Toast.makeText(getApplicationContext(), chatlist.message, Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), chatList.message, Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -112,7 +114,7 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
             @Override
             public void onClick(View v)
             {
-                Thread sentThread = new Thread(new SendMessage("Message"));
+                sentThread = new Thread(new SendMessage("Message"));
                 sentThread.start();
             }
         });
@@ -137,7 +139,7 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
                 if (file != null) {
                     FileUploader fileUploader = new FileUploader(ClientActivity.this, file);
                     fileUploader.execute();
-                    Thread sentThread = new Thread(new SendMessage("File"));
+                    sentThread = new Thread(new SendMessage("File"));
                     sentThread.start();
                 } else {
                     Toast.makeText(getApplicationContext(),
@@ -154,14 +156,22 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
                 chatView.setSelection(chatArrayAdapter.getCount() -1);
             }
         });
-
         connectServer();
     }
 
     @Override
     public void onBackPressed() {
-        stopClient();
-        super.onBackPressed();
+       try {
+           sentThread = new Thread(new SendMessage("Leave"));
+           sentThread.start();
+           sentThread.join();
+           stopClient();
+           super.onBackPressed();
+       } catch (Exception e) {
+           e.printStackTrace();
+           stopClient();
+           super.onBackPressed();
+       }
     }
 
     void connectServer() {
@@ -181,7 +191,6 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
 
                     ByteBuffer byteBuffer = charset.encode(String.valueOf(message));
                     socketChannel.write(byteBuffer);
-
                 } catch (Exception e) {
                     try {
                         stopClient();
@@ -189,6 +198,8 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
                     } catch(Exception e2) {}
                 }
                 receive();
+                sentThread = new Thread(new SendMessage("Enter"));
+                sentThread.start();
             }
 
         };
@@ -219,11 +230,15 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
                         Charset charset = Charset.forName("UTF-8");
                         final String data = charset.decode(byteBuffer).toString();
                         JsonParser parser = new JsonParser();
-                        JsonObject obj = (JsonObject) parser.parse(data);
-                        String name = obj.get("name").getAsString();
-                        String type = obj.get("type").getAsString();
-                        String contents = obj.get("contents").getAsString();
-                        position = "left";
+                        JsonObject jsonObj = (JsonObject) parser.parse(data);
+                        String name = jsonObj.get("name").getAsString();
+                        String type = jsonObj.get("type").getAsString();
+                        String contents = jsonObj.get("contents").getAsString();
+                        if (type.equals("Enter") || type.equals("Leave")) {
+                            position = "center";
+                        } else {
+                            position = "left";
+                        }
 
                         runOnUiThread(new Runnable() {
                             @Override
@@ -254,8 +269,14 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
                 final String contents;
                 if (type.equals("Message")) {
                     contents = chatText.getText().toString();
-                } else {
+                    ChatStore chatStore = new ChatStore();
+                    chatStore.execute(userInfo[0], contents).get();
+                } else if (type.equals("File")) {
                     contents = file.getName();
+                } else if (type.equals("Enter")){
+                    contents = userInfo[1] + "입장";
+                } else {
+                    contents = userInfo[1] + "퇴장";
                 }
 
                 JSONObject message = new JSONObject();
@@ -264,20 +285,21 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
                 message.put("contents", contents);
                 ByteBuffer byteBuffer = charset.encode(String.valueOf(message));
                 socketChannel.write(byteBuffer);
-                position = "right";
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        chatArrayAdapter.add(new ChatMessage(position, "", type, contents));
-                        chatText.setText("");
-                    }
-                });
+                if (type.equals("Message") || type.equals("File")) {
+                    position = "right";
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            chatArrayAdapter.add(new ChatMessage(position, "", type, contents));
+                            chatText.setText("");
+                        }
+                    });
+                }
             }
             catch(Exception e) {
                 e.printStackTrace();
                 stopClient();
 //                disableToUI();
-                return;
             }
         }
     }
