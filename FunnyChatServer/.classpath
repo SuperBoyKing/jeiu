@@ -8,5 +8,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="C:/Program Files/Java/lib/gson-2.8.5.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files/Java/lib/org.snu.ids.ha.jar" sourcepath="C:/Program Files/Java/lib/org.snu.ids.ha.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -33,6 +33,7 @@ public class ChatServer extends Application {
 	List<Client> connections = new Vector<Client>();
 	List<String> userNames = new Vector<String>();
 	List<String> roomList = new Vector<String>();
+	ChatAnalyzer chatAnalyzer = new ChatAnalyzer();
 	
 	public void startServer() {
 		executorService = Executors.newFixedThreadPool(8);
@@ -68,7 +69,7 @@ public class ChatServer extends Application {
 						String message = charset.decode(byteBuffer).toString();
 						JsonParser par = new JsonParser();
 						JsonObject obj = (JsonObject) par.parse(message);
-						String JSONmessage = String.valueOf(obj);
+						String.valueOf(obj);
 						String name = obj.get("name").getAsString();
 
 						connections.add(new Client(socketChannel, name));
@@ -149,7 +150,13 @@ public class ChatServer extends Application {
 							JsonParser par = new JsonParser();
 							JsonObject obj = (JsonObject) par.parse(message);
 							String JSONmessage = String.valueOf(obj).replace(',', ' ').replace('"', ' ');
+							String email = obj.get("email").getAsString();
 							String name = obj.get("name").getAsString();
+							String type= obj.get("type").getAsString();
+							String chat = obj.get("contents").getAsString();
+							if (type.equals("Message")) {
+								chatAnalyzer.analyze(email, chat);
+							}
 							Platform.runLater(()->displayText(JSONmessage));
 							
 							for (Client client : connections) {
