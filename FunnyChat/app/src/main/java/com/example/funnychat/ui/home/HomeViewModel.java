@@ -44,5 +44,4 @@ public class HomeViewModel extends ArrayAdapter<RoomInfo> {
 
         return row;
     }
-
 }

@@ -13,9 +13,9 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
-import com.example.funnychat.background.ChatStore;
 import com.example.funnychat.background.FileDownloader;
 import com.example.funnychat.background.FileUploader;
+import com.example.funnychat.background.HostConnector;
 import com.google.gson.*;
 
 import android.os.Environment;
@@ -40,7 +40,6 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
@@ -52,7 +51,7 @@ import pub.devrel.easypermissions.EasyPermissions.PermissionCallbacks;
 
 public class ClientActivity extends Activity implements PermissionCallbacks {
 
-    private static final String HOST_NAME = "172.30.1.21";
+    HostConnector hostConnector = new HostConnector();
     private static final String TAG = ClientActivity.class.getSimpleName();
     private static final String[] WRITE_PERMISSION = {"android.permission.WRITE_EXTERNAL_STORAGE"};
     private static final int REQUEST_FILE_CODE = 200;
@@ -102,7 +101,7 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
                         download_fileName = chatList.message;
                         DownloadFile();
                     } else {
-                        requestPermission(WRITE_PERMISSION);
+                        requestPermission();
                     }
 
                 } else {
@@ -182,12 +181,12 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
                     final String[] userInfo = getIntent().getStringArrayExtra(USER_INFO);
                     socketChannel = SocketChannel.open();
                     socketChannel.configureBlocking(true);
-                    socketChannel.connect(new InetSocketAddress(HOST_NAME, 1000));
+                    socketChannel.connect(new InetSocketAddress(hostConnector.getHostName(), 1000));
 
                     JSONObject message = new JSONObject();
+                    message.put("email", userInfo[0]);
                     message.put("name", userInfo[1]);
                     message.put("type", "Connect");
-                    message.put("email", userInfo[0]);
 
                     ByteBuffer byteBuffer = charset.encode(String.valueOf(message));
                     socketChannel.write(byteBuffer);
@@ -220,7 +219,7 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
             public void run() {
                 while (true) {
                     try {
-                        ByteBuffer byteBuffer = ByteBuffer.allocate(100);
+                        ByteBuffer byteBuffer = ByteBuffer.allocate(300);
                         int readByteCount = socketChannel.read(byteBuffer);
 
                         if (readByteCount == -1) {
@@ -249,7 +248,6 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
                     } catch (Exception e) {
                         e.printStackTrace();
                         stopClient();
-//                        disableToUI();
                         break;
                     }
                 }
@@ -269,17 +267,16 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
                 final String contents;
                 if (type.equals("Message")) {
                     contents = chatText.getText().toString();
-                    ChatStore chatStore = new ChatStore();
-                    chatStore.execute(userInfo[0], contents).get();
                 } else if (type.equals("File")) {
                     contents = file.getName();
                 } else if (type.equals("Enter")){
-                    contents = userInfo[1] + "입장";
+                    contents = userInfo[1] + "님이 입장하셨습니다.";
                 } else {
-                    contents = userInfo[1] + "퇴장";
+                    contents = userInfo[1] + "님이 퇴장하셨습니다.";
                 }
 
                 JSONObject message = new JSONObject();
+                message.put("email", userInfo[0]);
                 message.put("name", userInfo[1]);
                 message.put("type", type);
                 message.put("contents", contents);
@@ -299,7 +296,6 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
             catch(Exception e) {
                 e.printStackTrace();
                 stopClient();
-//                disableToUI();
             }
         }
     }
@@ -313,7 +309,7 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
         return true;
     }
 
-    private void requestPermission(String[] permission) {
+    private void requestPermission() {
         if (Build.VERSION.SDK_INT >= 23) {
             requestPermissions(WRITE_PERMISSION, WRITE_REQUEST_CODE);
         }
@@ -321,7 +317,7 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
 
     private void DownloadFile() {
         FileDownloader fileDownloader = new FileDownloader(ClientActivity.this);
-        fileDownloader.execute("http://" + HOST_NAME + ":8080/Connect/upload/" + download_fileName);
+        fileDownloader.execute("http://" + hostConnector.getHostName() + ":8080/FunnyChatServer/upload/" + download_fileName);
     }
 
     private void showFileBrowserIntent() {
@@ -368,10 +364,10 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
             int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
             realPath = cursor.getString(idx);
         }
+
         if (cursor != null) {
             cursor.close();
         }
-
         return realPath;
     }
 
@@ -410,13 +406,5 @@ public class ClientActivity extends Activity implements PermissionCallbacks {
     private void showFileBrowser() {
         fileUpload.setVisibility(View.GONE);
         fileBrowser.setVisibility(View.VISIBLE);
-    }
-
-    void disableToUI() {
-        chatText.setFocusable(false);
-        sent.setFocusable(false);
-        chatView.setFocusable(false);
-        fileBrowser.setFocusable(false);
-        fileUpload.setFocusable(false);
     }
 }

@@ -10,25 +10,24 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class DBConnector extends AsyncTask<String, Void, String> {
+public class GetterChat extends AsyncTask<String, Void, String> {
 
     String sendMsg, receiveMsg;
     HostConnector hostConnector;
 
-    public DBConnector() {
+    public GetterChat() {
         hostConnector = new HostConnector();
     }
-
     @Override
     protected String doInBackground(String... params) {
         try {
             String str;
-            URL url = new URL("http://" + hostConnector.getHostName() +":8080/FunnyChatServer/Android/userType.jsp");
+            URL url = new URL("http://" + hostConnector.getHostName() +":8080/FunnyChatServer/Android/getStatistics.jsp");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("Content-type", "application/x-www-form-urlencoded");
             conn.setRequestMethod("POST");
             OutputStreamWriter osw = new OutputStreamWriter(conn.getOutputStream());
-            sendMsg = "email=" + params[0] + "&password=" + params[1] + "&name=" + params[2] + "&type=" + params[3];
+            sendMsg = "send=" + params[0];
 
             osw.write(sendMsg);
             osw.flush();

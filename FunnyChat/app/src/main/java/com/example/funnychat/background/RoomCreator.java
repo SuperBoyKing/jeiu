@@ -20,16 +20,17 @@ import java.util.ArrayList;
 public class RoomCreator extends AsyncTask<String, Void, String> {
 
     String sendMsg, receiveMsg;
-    Context context;
-    ListView listView;
-    ArrayList<String> roomList = new ArrayList<>();
-    ProgressDialog progressDialog;
+    HostConnector hostConnector;
+
+    public RoomCreator() {
+        hostConnector = new HostConnector();
+    }
 
     @Override
     protected String doInBackground(String... params) {
         try {
             String str;
-            URL url = new URL("http://172.30.1.21:8080/Connect/Android/roomType.jsp");
+            URL url = new URL("http://" + hostConnector.getHostName() + ":8080/FunnyChatServer/Android/roomType.jsp");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("Content-type", "application/x-www-form-urlencoded");
             conn.setRequestMethod("POST");
