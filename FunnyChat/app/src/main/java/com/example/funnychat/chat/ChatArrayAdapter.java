@@ -10,8 +10,6 @@ import android.widget.TextView;
 
 import com.example.funnychat.R;
 
-import org.w3c.dom.Text;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -87,7 +85,7 @@ public class ChatArrayAdapter extends ArrayAdapter<ChatMessage> {
     }
 
     private void showUpName() {
-        their_name = (TextView) row.findViewById(R.id.name);
+        their_name = (TextView) row.findViewById(R.id.profile_name);
         their_name.setText(chatMessageObj.name);
     }
 }

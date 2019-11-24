@@ -14,9 +14,12 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.example.funnychat.R;
+import com.example.funnychat.background.SessionManager;
 import com.example.funnychat.foreground.LoginActivity;
 
 public class SendFragment extends Fragment {
+
+    SessionManager sessionManager;
 
     public void logout() {
         Intent intent = new Intent(getActivity(), LoginActivity.class);
@@ -28,9 +31,9 @@ public class SendFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        sendViewModel =
+        /*sendViewModel =
                 ViewModelProviders.of(this).get(SendViewModel.class);
-        View root = inflater.inflate(R.layout.fragment_send, container, false);
+
         final TextView textView = root.findViewById(R.id.text_send);
         sendViewModel.getText().observe(this, new Observer<String>() {
             @Override
@@ -38,7 +41,9 @@ public class SendFragment extends Fragment {
                 textView.setText(s);
             }
 
-        });
+        });*/
+        View root = inflater.inflate(R.layout.fragment_send, container, false);
+//        sessionManager.logout();
         logout();
         return root;
     }

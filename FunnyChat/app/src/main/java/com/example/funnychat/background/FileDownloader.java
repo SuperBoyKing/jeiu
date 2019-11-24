@@ -50,15 +50,15 @@ public class FileDownloader extends AsyncTask<String, String, String> {
             int lengthOfFile = conn.getContentLength();
 
             InputStream input = new BufferedInputStream(url.openStream(), 8192);
-            fileName = file_url[0].substring(file_url[0].lastIndexOf('/') + 1, file_url[0].length());
+            fileName = file_url[0].substring(file_url[0].lastIndexOf('/') + 1);
             /*folder = Environment.getExternalStorageDirectory() + File.separator +"funnyDownloader/";
 
             File outputFile = new File(folder, fileName);*/
             File path = Environment.getExternalStoragePublicDirectory(
-                    Environment.DIRECTORY_PICTURES);
-            File outputFile = new File(path, fileName);
+                    Environment.DIRECTORY_DCIM);
+            File outputFile = new File(path+"/Camera", fileName);
             try {
-                // Make sure the Pictures directory exists.
+                // Make sure the directory exists.
                 path.mkdirs();
 
                 outputFile.createNewFile();
@@ -83,7 +83,7 @@ public class FileDownloader extends AsyncTask<String, String, String> {
             bos.close();
             fos.close();
             input.close();
-            return "Downloaded at: " + folder + fileName;
+            return "Downloaded at: " + fileName;
         } catch (Exception e) {
             Log.e("Error ", e.getMessage());
         }

@@ -28,8 +28,6 @@ import java.util.HashMap;
 public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
-    private static final String USER_INFO = "user_Info";
-    private final static String ROOM_NAME = "room_name";
     SessionManager sessionManager;
     String mName;
     String mEmail;
@@ -39,12 +37,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // 세션에 저장되어 있는 회원 정보 가져오기
         sessionManager = new SessionManager(this);
         sessionManager.checkLogin();
         HashMap<String, String> user = sessionManager.getUserDetail();
         this.mName = user.get(sessionManager.NAME);
         this.mEmail = user.get(sessionManager.EMAIL);
 
+        // UI 생성 및 초기화
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
         // menu should be considered as top level destinations.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow,
-                R.id.nav_tools, R.id.nav_share, R.id.nav_send)
+                /*R.id.nav_tools,*/ R.id.nav_share, R.id.nav_send)
                 .setDrawerLayout(drawer)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
@@ -69,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    // navigation controller 초기화
     @Override
     public boolean onSupportNavigateUp() {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
@@ -76,8 +77,9 @@ public class MainActivity extends AppCompatActivity {
                 || super.onSupportNavigateUp();
     }
 
+    // 회원 정보 기반 유저 프로필 동기화
     public void SycUserProfile(NavigationView navigationView) {
-        final String userInfo[] = getIntent().getStringArrayExtra(USER_INFO);
+        //final String userInfo[] = getIntent().getStringArrayExtra(USER_INFO);
         View headerView = navigationView.getHeaderView(0);
         TextView headerTitle = headerView.findViewById(R.id.textView_head);
         TextView headerSubTitle = headerView.findViewById(R.id.textView_sub);
