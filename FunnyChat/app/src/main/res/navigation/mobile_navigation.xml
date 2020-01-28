@@ -19,9 +19,9 @@
 
     <fragment
         android:id="@+id/nav_slideshow"
-        android:name="com.example.funnychat.ui.slideshow.SlideshowFragment"
+        android:name="com.example.funnychat.ui.statistics.SlideshowFragment"
         android:label="@string/menu_slideshow"
-        tools:layout="@layout/fragment_slideshow" />
+        tools:layout="@layout/fragment_statistics" />
 
     <fragment
         android:id="@+id/nav_tools"
@@ -31,13 +31,13 @@
 
     <fragment
         android:id="@+id/nav_share"
-        android:name="com.example.funnychat.ui.share.ShareFragment"
+        android:name="com.example.funnychat.ui.profile.ShareFragment"
         android:label="@string/menu_share"
         tools:layout="@layout/fragment_share" />
 
     <fragment
         android:id="@+id/nav_send"
-        android:name="com.example.funnychat.ui.send.SendFragment"
+        android:name="com.example.funnychat.ui.logout.SendFragment"
         android:label="@string/menu_send"
         tools:layout="@layout/fragment_send" />
 </navigation>

@@ -13,12 +13,17 @@ import java.net.URL;
 public class DBConnector extends AsyncTask<String, Void, String> {
 
     String sendMsg, receiveMsg;
+    HostConnector hostConnector;
+
+    public DBConnector() {
+        hostConnector = new HostConnector();
+    }
 
     @Override
     protected String doInBackground(String... params) {
         try {
             String str;
-            URL url = new URL("http://172.30.1.21:8080/Connect/Android/userType.jsp");
+            URL url = new URL("http://" + hostConnector.getHostName() +":8080/FunnyChatServer/Android/userType.jsp");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("Content-type", "application/x-www-form-urlencoded");
             conn.setRequestMethod("POST");

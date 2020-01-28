@@ -1,28 +1,23 @@
 package com.example.funnychat.background;
 
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.example.funnychat.MainActivity;
 import com.example.funnychat.chat.ClientActivity;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class FileDownloader extends AsyncTask<String, String, String> {
 
@@ -55,10 +50,21 @@ public class FileDownloader extends AsyncTask<String, String, String> {
             int lengthOfFile = conn.getContentLength();
 
             InputStream input = new BufferedInputStream(url.openStream(), 8192);
-            fileName = file_url[0].substring(file_url[0].lastIndexOf('/') + 1, file_url[0].length());
-            folder = Environment.getExternalStorageDirectory() + File.separator +"funnyDownloader/";
+            fileName = file_url[0].substring(file_url[0].lastIndexOf('/') + 1);
+            /*folder = Environment.getExternalStorageDirectory() + File.separator +"funnyDownloader/";
 
-            File outputFile = new File(folder, fileName);
+            File outputFile = new File(folder, fileName);*/
+            File path = Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DCIM);
+            File outputFile = new File(path+"/Camera", fileName);
+            try {
+                // Make sure the directory exists.
+                path.mkdirs();
+
+                outputFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
             OutputStream fos = new FileOutputStream(outputFile);
             BufferedOutputStream bos = new BufferedOutputStream(fos);
@@ -77,7 +83,7 @@ public class FileDownloader extends AsyncTask<String, String, String> {
             bos.close();
             fos.close();
             input.close();
-            return "Downloaded at: " + folder + fileName;
+            return "Downloaded at: " + fileName;
         } catch (Exception e) {
             Log.e("Error ", e.getMessage());
         }

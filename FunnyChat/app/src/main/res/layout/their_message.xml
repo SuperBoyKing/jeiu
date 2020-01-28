@@ -17,7 +17,7 @@
     android:id="@+id/avatar"!-->
 
     <TextView
-        android:id="@+id/name"
+        android:id="@+id/profile_name"
         android:text="Rose"
         android:layout_marginLeft="15dp"
         android:layout_width="wrap_content"
@@ -30,8 +30,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/message_body"
-        android:layout_below="@+id/name"
-        android:layout_alignLeft="@+id/name"
+        android:layout_below="@+id/profile_name"
+        android:layout_alignLeft="@+id/profile_name"
         android:background="@drawable/their_message"
         android:paddingVertical="12dp"
         android:paddingHorizontal="16dp"

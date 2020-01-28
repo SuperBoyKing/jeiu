@@ -26,10 +26,12 @@ public class FileUploader extends AsyncTask<Void, Integer, String> {
     Exception exception;
     private ProgressDialog progressDialog;
     private File file;
+    HostConnector hostConnector;
 
     public FileUploader(Context context, File file) {
         this.context = context;
         this.file = file;
+        hostConnector = new HostConnector();
     }
 
     @Override
@@ -45,7 +47,7 @@ public class FileUploader extends AsyncTask<Void, Integer, String> {
         HttpResponse httpResponse;
         HttpEntity httpEntity;
         String responseString = null;
-        final String SERVER_PATH = "http://172.30.1.21:8080/Connect/Android/index.jsp";
+        final String SERVER_PATH = "http://" + hostConnector.getHostName() +":8080/FunnyChatServer/Android/index.jsp";
 
         try {
             HttpPostHC4 httpPost = new HttpPostHC4(SERVER_PATH);
